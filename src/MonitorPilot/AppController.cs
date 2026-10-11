@@ -24,7 +24,7 @@ internal sealed class AppController
     public bool Busy {get;private set;}
     public bool Discovering {get;private set;}
     public Window? Owner {get;set;}
-    public string Status {get;private set;}="MonitorPilot wird gestartet …";
+    public string Status {get;private set;}=L.T("MonitorPilot wird gestartet …");
     public bool Error {get;private set;}
     public event Action? Changed;
     public event Action? StatusChanged;
@@ -46,7 +46,7 @@ internal sealed class AppController
         Live.Settled+=()=>Dispatch(()=>
         {
             if(Live.IsRunning)return;
-            if(!Busy&&!Error){Status="Live übernommen · Monitorwerte bestätigt.";StatusChanged?.Invoke();}
+            if(!Busy&&!Error){Status=L.T("Live übernommen · Monitorwerte bestätigt.");StatusChanged?.Invoke();}
             LiveSettled?.Invoke();
         });
     }
@@ -73,7 +73,7 @@ internal sealed class AppController
     }
     private void LiveQueued(bool idle)
     {
-        if((idle||Error)&&Live.IsRunning){Status="Wird live übernommen …";Error=false;StatusChanged?.Invoke();}
+        if((idle||Error)&&Live.IsRunning){Status=L.T("Wird live übernommen …");Error=false;StatusChanged?.Invoke();}
         HardwareChanged?.Invoke();
     }
     public void SetDimming(MonitorDevice m,int percent)
@@ -84,21 +84,21 @@ internal sealed class AppController
     public void Load()
     {
         var recovered=new List<string>();
-        Settings=Store.ReadRecoverable<AppSettings>("settings.json",recovered:recovered.Add)??new();Settings.Normalize();
+        Settings=Store.ReadRecoverable<AppSettings>("settings.json",recovered:recovered.Add)??new();Settings.Normalize();L.SetLanguage(Settings.Language);
         Profiles=Store.ReadRecoverable<List<ProfileEntry>>("profiles.json",profiles=>
         {
-            if(profiles.Any(p=>p==null||string.IsNullOrWhiteSpace(p.Id))||profiles.Select(p=>p.Id).Distinct().Count()!=profiles.Count)throw new InvalidDataException("Ungültige Profilübersicht.");
+            if(profiles.Any(p=>p==null||string.IsNullOrWhiteSpace(p.Id))||profiles.Select(p=>p.Id).Distinct().Count()!=profiles.Count)throw new InvalidDataException(L.T("Ungültige Profilübersicht."));
             foreach(var profile in profiles)Store.Validate(profile.Workspace);
         },recovered.Add)??new();
         FocusBackup=Store.ReadRecoverable<WorkspaceSnapshot>("focus-workspace.json",Store.Validate,recovered.Add);
-        if(recovered.Count>0)Report("Beschädigte Daten wurden im Datenordner als .bak gesichert. Andere Einstellungen und Profile bleiben erhalten.",true);
+        if(recovered.Count>0)Report(L.T("Beschädigte Daten wurden im Datenordner als .bak gesichert. Andere Einstellungen und Profile bleiben erhalten."),true);
     }
     public void SaveSettings()=>Store.Save("settings.json",Settings);
     public string Name(MonitorDevice monitor)=>Settings.Aliases.TryGetValue(monitor.Key,out var alias)&&!string.IsNullOrWhiteSpace(alias)?alias:monitor.Name;
     public void Report(string message,bool error=false) {Status=message;Error=error;Store.Log(message);StatusChanged?.Invoke();}
     public async Task Run(Func<Task> operation)
     {
-        if(Busy) {Report("Eine Monitoraktion läuft bereits. Bitte kurz warten.");return;}
+        if(Busy) {Report(L.T("Eine Monitoraktion läuft bereits. Bitte kurz warten."));return;}
         var elapsed=Stopwatch.StartNew();
         Busy=true;StatusChanged?.Invoke();
         try {await Live.DrainAsync();await operation();}
@@ -110,7 +110,7 @@ internal sealed class AppController
     public async Task RefreshCapabilities()=>await Refresh(true);
     private async Task Refresh(bool forceCapabilities)
     {
-        Report(forceCapabilities?"DDC/CI-Funktionslisten werden erneut geprüft. Manche Monitore brauchen dafür mehrere Sekunden …":"Aktuelle Monitorwerte werden ausgelesen …");
+        Report(forceCapabilities?L.T("DDC/CI-Funktionslisten werden erneut geprüft. Manche Monitore brauchen dafür mehrere Sekunden …"):L.T("Aktuelle Monitorwerte werden ausgelesen …"));
         DisplayService.InvalidateModes();
         var list=await Task.Run(Displays.Enumerate);
         foreach(var monitor in list)
@@ -121,7 +121,7 @@ internal sealed class AppController
         await Task.WhenAll(list.Where(m=>m.Active).Select(m=>Task.Run(()=>Hardware.Probe(m,forceCapabilities))));
         Monitors=list;
         Overlays.Reposition(Monitors);
-        Report($"{Monitors.Count(m=>m.Active)} aktive Monitore · {Monitors.Count(m=>m.Hardware.Brightness!=null)} mit Hardware-Helligkeit · Lokal verbunden");
+        Report(L.F($"{Monitors.Count(m=>m.Active)} aktive Monitore · {Monitors.Count(m=>m.Hardware.Brightness!=null)} mit Hardware-Helligkeit · Lokal verbunden"));
     }
     public async Task Initialize()
     {
@@ -129,19 +129,19 @@ internal sealed class AppController
         try
         {
             Monitors=await Task.Run(Displays.Enumerate);var list=Monitors;
-            Overlays.Reposition(list);Report("Monitore verbunden. Helligkeit wird erkannt …");Changed?.Invoke();
+            Overlays.Reposition(list);Report(L.T("Monitore verbunden. Helligkeit wird erkannt …"));Changed?.Invoke();
             var active=list.Where(m=>m.Active).ToList();
             await Task.WhenAll(active.Select(m=>Task.Run(()=>Hardware.ProbeBrightness(m))));
             if(!ReferenceEquals(list,Monitors))return;
             HardwareDiscovered?.Invoke();Store.Log($"Startup brightness ready: {elapsed.Elapsed.TotalMilliseconds:0} ms");
-            if(!Busy)Report("Helligkeit bereit. Weitere Monitorfunktionen werden im Hintergrund erkannt …");
+            if(!Busy)Report(L.T("Helligkeit bereit. Weitere Monitorfunktionen werden im Hintergrund erkannt …"));
             var main=Main;
             var modes=Task.Run(()=>{if(main!=null)DisplayService.Modes(main.DeviceName);});
             await Task.WhenAll(active.Select(m=>Task.Run(()=>Hardware.Probe(m))).Append(modes));
             if(!ReferenceEquals(list,Monitors))return;
             Discovering=false;HardwareDiscovered?.Invoke();
             Store.Log($"Startup hardware ready: {elapsed.Elapsed.TotalMilliseconds:0} ms");
-            if(!Busy)Report($"{active.Count} aktive Monitore · {active.Count(m=>m.Hardware.Brightness!=null)} mit Hardware-Helligkeit · Lokal verbunden");
+            if(!Busy)Report(L.F($"{active.Count} aktive Monitore · {active.Count(m=>m.Hardware.Brightness!=null)} mit Hardware-Helligkeit · Lokal verbunden"));
         }
         finally{if(Discovering){Discovering=false;HardwareDiscovered?.Invoke();}}
     }
@@ -174,8 +174,8 @@ internal sealed class AppController
             bool keep=new ConfirmWindow(guard) {Owner=Owner}.ShowDialog()==true;
             if(keep && await guard.Accept()) return true;
             var rollback=await guard.Rollback();
-            if(!rollback.Restored) throw new InvalidOperationException("Wiederherstellung fehlgeschlagen: "+rollback.Error+". Über Windows + P die Anzeige erweitern.");
-            Report("Vorherige Monitore und Fenster wurden wiederhergestellt.");return false;
+            if(!rollback.Restored) throw new InvalidOperationException(L.T("Wiederherstellung fehlgeschlagen: ")+rollback.Error+L.T(". Über Windows + P die Anzeige erweitern."));
+            Report(L.T("Vorherige Monitore und Fenster wurden wiederhergestellt."));return false;
         }
         catch
         {
@@ -186,10 +186,10 @@ internal sealed class AppController
     }
     public async Task Focus()
     {
-        var main=Main ?? throw new InvalidOperationException("Kein aktiver Hauptmonitor vorhanden.");
+        var main=Main ?? throw new InvalidOperationException(L.T("Kein aktiver Hauptmonitor vorhanden."));
         if(Monitors.Count(m=>m.Active)==1) {await Restore();return;}
-        Report("Arbeitsplatz, Fenster und Monitorwerte werden gesichert …");
-        var before=await Capture("Vor Fokusmodus");
+        Report(L.T("Arbeitsplatz, Fenster und Monitorwerte werden gesichert …"));
+        var before=await Capture(L.T("Vor Fokusmodus"));
         var target=DisplayService.Select(before.Topology,new[]{main.Key},main.Key);
         Displays.Validate(Displays.Resolve(target));
         var prior=FocusBackup;
@@ -208,7 +208,7 @@ internal sealed class AppController
             if(!kept) SetFocusBackup(prior);
             await Refresh();
         }
-        if(kept) Report($"Fokusmodus aktiv auf {Name(main)}. {before.Windows.Count} Fensterpositionen und {before.Topology.Identities.Count} Monitore sind gesichert.");
+        if(kept) Report(L.F($"Fokusmodus aktiv auf {Name(main)}. {before.Windows.Count} Fensterpositionen und {before.Topology.Identities.Count} Monitore sind gesichert."));
     }
     private void SetFocusBackup(WorkspaceSnapshot? snapshot)
     {
@@ -219,14 +219,14 @@ internal sealed class AppController
     public async Task Restore()
     {
         var saved=FocusBackup??Store.Read<WorkspaceSnapshot>("last-workspace.json");
-        if(saved==null) throw new InvalidOperationException("Noch keine Arbeitsplatzsicherung vorhanden. Zum ersten Aktivieren bitte „Alle erweitern“ verwenden.");
+        if(saved==null) throw new InvalidOperationException(L.T("Noch keine Arbeitsplatzsicherung vorhanden. Zum ersten Aktivieren bitte „Alle erweitern“ verwenden."));
         bool restored=await ApplyWorkspace(saved);
         if(restored) SetFocusBackup(null);
     }
     public async Task<bool> ApplyWorkspace(WorkspaceSnapshot saved)
     {
         Store.Validate(saved);Displays.Validate(Displays.Resolve(saved.Topology));
-        var before=await Capture("Vor "+saved.Name);
+        var before=await Capture(L.T("Vor ")+saved.Name);
         (int Restored,int Skipped) windowResult=(0,0);
         bool keep=await Switch(before,async()=>
         {
@@ -242,41 +242,41 @@ internal sealed class AppController
         }));
         var failures=results.Where(e=>e!=null).ToList();
         Overlays.Restore(saved.Dimming,Monitors);
-        Report($"{saved.Name} wiederhergestellt · {windowResult.Restored} Fenster zugeordnet"+(windowResult.Skipped>0?$" · {windowResult.Skipped} inzwischen geschlossen/nicht erreichbar":"")+(failures.Count>0?". Monitorwerte teilweise offen: "+string.Join("; ",failures):". Auflösung, Anordnung und Monitorwerte geladen."),failures.Count>0);
+        Report(L.F($"{saved.Name} wiederhergestellt · {windowResult.Restored} Fenster zugeordnet")+(windowResult.Skipped>0?L.F($" · {windowResult.Skipped} inzwischen geschlossen/nicht erreichbar"):"")+(failures.Count>0?L.T(". Monitorwerte teilweise offen: ")+string.Join("; ",failures):L.T(". Auflösung, Anordnung und Monitorwerte geladen.")),failures.Count>0);
         return failures.Count==0;
     }
     public async Task SelectMonitors(List<string> keys,string primary)
     {
-        var before=await Capture("Vor Monitorauswahl");
+        var before=await Capture(L.T("Vor Monitorauswahl"));
         var baseline=keys.All(k=>before.Topology.Identities.Any(i=>i.Key==k))?before.Topology:FocusBackup?.Topology;
-        if(baseline==null) throw new InvalidOperationException("Zuerst „Alle erweitern“ verwenden, damit die Anordnung dieses Monitors bekannt ist.");
+        if(baseline==null) throw new InvalidOperationException(L.T("Zuerst „Alle erweitern“ verwenden, damit die Anordnung dieses Monitors bekannt ist."));
         var target=DisplayService.Select(baseline,keys,primary);Displays.Validate(Displays.Resolve(target));
         var prior=FocusBackup;bool kept=false;
         if(keys.Count<before.Topology.Identities.Count && (FocusBackup==null||before.Topology.Identities.Count>=FocusBackup.Topology.Identities.Count))SetFocusBackup(before);
         try {kept=await Switch(before,()=>Task.Run(()=>Displays.Apply(target)));}
         finally {if(!kept)SetFocusBackup(prior);await Refresh();}
-        if(kept) Report("Monitorauswahl übernommen. Vorheriger Arbeitsplatz bleibt wiederherstellbar.");
+        if(kept) Report(L.T("Monitorauswahl übernommen. Vorheriger Arbeitsplatz bleibt wiederherstellbar."));
     }
     public async Task Extend()
     {
-        var before=await Capture("Vor Erweitern");
+        var before=await Capture(L.T("Vor Erweitern"));
         bool kept=await Switch(before,()=>Task.Run(()=>Displays.Extend()));await Refresh();
-        if(kept)Report("Alle verfügbaren Monitore sind erweitert. Für die alte Anordnung und Fenster „Arbeitsplatz wiederherstellen“ verwenden.");
+        if(kept)Report(L.T("Alle verfügbaren Monitore sind erweitert. Für die alte Anordnung und Fenster „Arbeitsplatz wiederherstellen“ verwenden."));
     }
     public async Task ApplyLayout(TopologySnapshot layout)
     {
-        Displays.Validate(Displays.Resolve(layout));var before=await Capture("Vor Anordnung");
-        bool kept=await Switch(before,()=>Task.Run(()=>Displays.Apply(layout)));await Refresh();if(kept)Report("Monitoranordnung übernommen.");
+        Displays.Validate(Displays.Resolve(layout));var before=await Capture(L.T("Vor Anordnung"));
+        bool kept=await Switch(before,()=>Task.Run(()=>Displays.Apply(layout)));await Refresh();if(kept)Report(L.T("Monitoranordnung übernommen."));
     }
     public async Task ChangeMode(MonitorDevice monitor,Native.DevMode mode,uint rotation)
     {
-        var before=await Capture("Vor Displaymodus");
-        bool kept=await Switch(before,()=>Task.Run(()=>Displays.ChangeMode(monitor.DeviceName,mode,rotation)));await Refresh();if(kept)Report("Auflösung, Bildwiederholrate und Ausrichtung übernommen.");
+        var before=await Capture(L.T("Vor Displaymodus"));
+        bool kept=await Switch(before,()=>Task.Run(()=>Displays.ChangeMode(monitor.DeviceName,mode,rotation)));await Refresh();if(kept)Report(L.T("Auflösung, Bildwiederholrate und Ausrichtung übernommen."));
     }
     public async Task ApplyHardware(MonitorDevice monitor,HardwareState desired,int dim)
     {
-        Report("Monitorwerte werden gesetzt und zurückgelesen …");
-        try {await Task.Run(()=>Hardware.Apply(monitor,desired));Overlays.Set(monitor,dim);Report($"{Name(monitor)}: Monitorwerte bestätigt · Softwaredimmung {dim} %");}
+        Report(L.T("Monitorwerte werden gesetzt und zurückgelesen …"));
+        try {await Task.Run(()=>Hardware.Apply(monitor,desired));Overlays.Set(monitor,dim);Report(L.F($"{Name(monitor)}: Monitorwerte bestätigt · Softwaredimmung {dim} %"));}
         catch {await Task.Run(()=>Hardware.Probe(monitor));throw;}
     }
     public async Task Brightness(int value,bool relative=false)
@@ -285,41 +285,41 @@ internal sealed class AppController
         =>await SetBrightness(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null&&levels.ContainsKey(m.Key)).Select(m=>(Monitor:m,Value:levels[m.Key])).ToArray(),false);
     private async Task SetBrightness((MonitorDevice Monitor,int Value)[] targets,bool relative)
     {
-        Report("Helligkeit wird gesetzt und bestätigt …");
+        Report(L.T("Helligkeit wird gesetzt und bestätigt …"));
         var results=await Task.WhenAll(targets.Select(async target=>
         {
             try {await Task.Run(()=>Hardware.ApplyBrightness(target.Monitor,target.Value,relative));return (string?)null;}
             catch(Exception ex) {return Name(target.Monitor)+": "+ex.Message;}
         }));
         int done=results.Count(e=>e==null);var failed=results.Where(e=>e!=null).ToList();
-        if(done==0 && failed.Count==0) throw new InvalidOperationException("Kein Monitor mit erreichbarer Hardware-Helligkeit. DDC/CI im Bildschirmmenü aktivieren.");
-        Report($"Helligkeit an {done} Monitoren bestätigt."+(failed.Count>0?" Offen: "+string.Join("; ",failed):""),failed.Count>0);
+        if(done==0 && failed.Count==0) throw new InvalidOperationException(L.T("Kein Monitor mit erreichbarer Hardware-Helligkeit. DDC/CI im Bildschirmmenü aktivieren."));
+        Report(L.F($"Helligkeit an {done} Monitoren bestätigt.")+(failed.Count>0?L.T(" Offen: ")+string.Join("; ",failed):""),failed.Count>0);
     }
     public async Task SaveProfile(string name)
     {
-        if(string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Bitte einen Profilnamen eingeben.");
-        var snapshot=await Capture(name.Trim());Profiles.Add(new() {Workspace=snapshot});Store.Save("profiles.json",Profiles);Report($"Profil „{name.Trim()}“ gespeichert: {snapshot.Topology.Identities.Count} Monitore und {snapshot.Windows.Count} Fenster.");
+        if(string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException(L.T("Bitte einen Profilnamen eingeben."));
+        var snapshot=await Capture(name.Trim());Profiles.Add(new() {Workspace=snapshot});Store.Save("profiles.json",Profiles);Report(L.F($"Profil „{name.Trim()}“ gespeichert: {snapshot.Topology.Identities.Count} Monitore und {snapshot.Windows.Count} Fenster."));
     }
     public void Import(WorkspaceSnapshot workspace)
     {
-        Store.Validate(workspace);Profiles.Add(new(){Workspace=workspace});Store.Save("profiles.json",Profiles);Changed?.Invoke();Report("Profil importiert. Es wird erst beim Anwenden aktiviert.");
+        Store.Validate(workspace);Profiles.Add(new(){Workspace=workspace});Store.Save("profiles.json",Profiles);Changed?.Invoke();Report(L.T("Profil importiert. Es wird erst beim Anwenden aktiviert."));
     }
-    public void DeleteProfile(ProfileEntry profile) {Profiles.Remove(profile);Store.Save("profiles.json",Profiles);Changed?.Invoke();Report("Profil entfernt.");}
+    public void DeleteProfile(ProfileEntry profile) {Profiles.Remove(profile);Store.Save("profiles.json",Profiles);Changed?.Invoke();Report(L.T("Profil entfernt."));}
     public async Task Rescue()
     {
-        var main=Main??throw new InvalidOperationException("Kein Hauptmonitor verfügbar.");
+        var main=Main??throw new InvalidOperationException(L.T("Kein Hauptmonitor verfügbar."));
         var windows=Windows.Capture(Monitors);Store.Save("window-backup.json",windows);
-        int count=await Task.Run(()=>Windows.Gather(main,windows));Report($"{count} Fenster auf {Name(main)} geholt. Ursprüngliche Positionen separat gesichert.");
+        int count=await Task.Run(()=>Windows.Gather(main,windows));Report(L.F($"{count} Fenster auf {Name(main)} geholt. Ursprüngliche Positionen separat gesichert."));
     }
     public void RestoreWindows()
     {
-        var backup=Store.Read<List<SavedWindow>>("window-backup.json")??throw new InvalidOperationException("Noch keine Fenstersicherung vorhanden.");
-        var result=Windows.Restore(backup);Report($"{result.Restored} Fensterpositionen wiederhergestellt · {result.Skipped} nicht mehr verfügbar.");
+        var backup=Store.Read<List<SavedWindow>>("window-backup.json")??throw new InvalidOperationException(L.T("Noch keine Fenstersicherung vorhanden."));
+        var result=Windows.Restore(backup);Report(L.F($"{result.Restored} Fensterpositionen wiederhergestellt · {result.Skipped} nicht mehr verfügbar."));
     }
     public async Task OriginalHardware(MonitorDevice monitor)
     {
         var originals=Store.Read<Dictionary<string,HardwareState>>("hardware-original.json");
-        if(originals==null || !originals.TryGetValue(monitor.Key,out var original)) throw new InvalidOperationException("Für diesen Monitor gibt es noch keine Hardwareänderung von MonitorPilot.");
+        if(originals==null || !originals.TryGetValue(monitor.Key,out var original)) throw new InvalidOperationException(L.T("Für diesen Monitor gibt es noch keine Hardwareänderung von MonitorPilot."));
         await ApplyHardware(monitor,original,0);
     }
     public static bool IsNight(TimeSpan now,TimeSpan day,TimeSpan night)=>day<night ? now<day||now>=night : now>=night && now<day;
@@ -329,11 +329,11 @@ internal sealed class ConfirmWindow : Window
 {
     public ConfirmWindow(RecoveryGuard guard)
     {
-        Title="MonitorPilot · Änderung bestätigen";Width=570;Height=290;ResizeMode=ResizeMode.NoResize;WindowStartupLocation=WindowStartupLocation.CenterScreen;Topmost=true;Theme.Decorate(this);
+        Title=L.T("MonitorPilot · Änderung bestätigen");Width=570;Height=290;ResizeMode=ResizeMode.NoResize;WindowStartupLocation=WindowStartupLocation.CenterScreen;Topmost=true;Theme.Decorate(this);
         var counter=Theme.Label("",16,Theme.Accent,true);
-        Content=new Border {Padding=new Thickness(28),Child=Theme.Stack(Theme.Label("Ist alles gut sichtbar?",25,null,true),Theme.Label("Bestätige die neue Bildschirmkonfiguration. Ohne Bestätigung stellt ein separater Prozess die vorherigen Monitore und Fenster wieder her.",14,Theme.Muted),counter,Theme.Row(Theme.Button("Änderung behalten",()=>DialogResult=true,true),Theme.Button("Sofort zurücksetzen",()=>DialogResult=false)))};
+        Content=new Border {Padding=new Thickness(28),Child=Theme.Stack(Theme.Label(L.T("Ist alles gut sichtbar?"),25,null,true),Theme.Label(L.T("Bestätige die neue Bildschirmkonfiguration. Ohne Bestätigung stellt ein separater Prozess die vorherigen Monitore und Fenster wieder her."),14,Theme.Muted),counter,Theme.Row(Theme.Button(L.T("Änderung behalten"),()=>DialogResult=true,true),Theme.Button(L.T("Sofort zurücksetzen"),()=>DialogResult=false)))};
         var timer=new DispatcherTimer {Interval=TimeSpan.FromMilliseconds(200)};
-        void Update() {int left=Math.Max(0,RecoveryGuard.TimeoutSeconds-1-(int)guard.Elapsed.Elapsed.TotalSeconds);counter.Text=$"Automatische Wiederherstellung in {left} Sekunden";if(left==0){timer.Stop();DialogResult=false;}}
+        void Update() {int left=Math.Max(0,RecoveryGuard.TimeoutSeconds-1-(int)guard.Elapsed.Elapsed.TotalSeconds);counter.Text=L.F($"Automatische Wiederherstellung in {left} Sekunden");if(left==0){timer.Stop();DialogResult=false;}}
         timer.Tick+=(_,_)=>Update();Loaded+=(_,_)=>{Update();timer.Start();Activate();};Closed+=(_,_)=>timer.Stop();PreviewKeyDown+=(_,e)=>{if(e.Key==System.Windows.Input.Key.Escape)DialogResult=false;};
     }
 }

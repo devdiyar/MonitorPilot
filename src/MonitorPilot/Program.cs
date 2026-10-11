@@ -18,7 +18,7 @@ internal static class Program
         try
         {
             if(args.Contains("--install")||Path.GetFileNameWithoutExtension(Environment.ProcessPath!).Equals("MonitorPilot-Setup",StringComparison.OrdinalIgnoreCase))return Installer.Install(args.Contains("--silent"));
-            if(args.Length>=3 && args[0]=="--watchdog")return RecoveryGuard.Watchdog(args[1],args[2]);
+            if(args.Length>=3 && args[0]=="--watchdog"){try{L.SetLanguage(Store.Read<AppSettings>("settings.json")?.Language);}catch{}return RecoveryGuard.Watchdog(args[1],args[2]);}
             if(args.Length>=2 && args[0]=="--self-test")return SelfTests.Run(args[1]);
             if(args.Length>=2 && args[0]=="--diagnose")return Diagnose(args[1]);
             if(args.Length>=2 && args[0]=="--test-ddc")return TestDdc(args[1]);
@@ -53,7 +53,7 @@ internal static class Program
         {
             Store.Log("Fatal: "+ex);
             if(args.Length>=2 && args[0].StartsWith("--",StringComparison.Ordinal))File.WriteAllText(args[1]+".error",ex.ToString());
-            else MessageBox.Show(ex.Message,"MonitorPilot konnte nicht starten",MessageBoxButton.OK,MessageBoxImage.Error);
+            else MessageBox.Show(ex.Message,L.T("MonitorPilot konnte nicht starten"),MessageBoxButton.OK,MessageBoxImage.Error);
             return 1;
         }
     }
@@ -68,7 +68,7 @@ internal static class Program
             try {var subset=DisplayService.Select(snapshot,new[]{m.Key},m.Key);displays.Validate(displays.Resolve(subset));focus.Add(new{Monitor=m.Name,Valid=true});}
             catch(Exception ex) {focus.Add(new{Monitor=m.Name,Valid=false,Error=ex.Message});}
         }
-        Write(path,new {Version="1.3.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=monitors,ActiveSnapshotValid=true,FocusValidation=focus,OpenWindowCount=new WindowService().Capture(monitors).Count,InteropSizes=new{Path=Marshal.SizeOf<Native.DisplayPath>(),Mode=Marshal.SizeOf<Native.DisplayMode>(),DevMode=Marshal.SizeOf<Native.DevMode>(),TargetName=Marshal.SizeOf<Native.TargetName>()}});return 0;
+        Write(path,new {Version="1.4.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=monitors,ActiveSnapshotValid=true,FocusValidation=focus,OpenWindowCount=new WindowService().Capture(monitors).Count,InteropSizes=new{Path=Marshal.SizeOf<Native.DisplayPath>(),Mode=Marshal.SizeOf<Native.DisplayMode>(),DevMode=Marshal.SizeOf<Native.DevMode>(),TargetName=Marshal.SizeOf<Native.TargetName>()}});return 0;
     }
     private static int TestDdc(string path)
     {

@@ -1,17 +1,17 @@
 # MonitorPilot — Prüfbericht
 
-Stand: 11.10.2026. Zielversion: **1.3.0**. Prüfplatz: Windows 11 x64, fünf externe Monitore, Intel UHD 770 und NVIDIA RTX 4070 SUPER. Keine Zertifizierung für jede Windows-/Monitorkombination.
+Stand: 11.10.2026. Zielversion: **1.4.0**. Prüfplatz: Windows 11 x64, fünf externe Monitore, Intel UHD 770 und NVIDIA RTX 4070 SUPER. Keine Zertifizierung für jede Windows-/Monitorkombination.
 
 ## Aktuelle Prüfungen
 
 | Prüfung | Nachweis |
 | --- | --- |
 | Release | Selbständige Windows-x64-EXE erfolgreich erstellt. |
-| Selbsttests | **47 bestanden**: native Strukturgrößen, Snapshot-Rundreise, Fokusauswahl, Prozentabbildung, Adapter-Zugriff, Cache, begrenzte Wiederholungen, Live-Queue, Zeitplan, Profilvalidierung, beschädigte Dateien und Guardian-Startkommando. |
-| WPF-Integration | **14 bestanden**: echte App-/Tray-Regler gegen simulierte Hardware, Live-Übernahme, keine Bildregler-Übernahmebuttons, App-/Tray-Abgleich, gemeinsamer Regler, RGB nach Weißpunkt, Dimmfenster-Wiederverwendung, Drain vor Arbeitsplatzaktionen, schmale Seiten/Fenster. |
+| Selbsttests | **54 bestanden**: native Strukturgrößen, Snapshot-Rundreise, Fokusauswahl, Prozentabbildung, Adapter-Zugriff, Cache, begrenzte Wiederholungen, Live-Queue, Zeitplan, Profilvalidierung, beschädigte Dateien und Guardian-Startkommando, Sprachressourcen, Formatargumente, Persistenz und eigene Namen. |
+| WPF-Integration | **23 bestanden**: echte App-/Tray-Regler gegen simulierte Hardware, Live-Übernahme, keine Bildregler-Übernahmebuttons, App-/Tray-Abgleich, gemeinsamer Regler, RGB nach Weißpunkt, Dimmfenster-Wiederverwendung, Drain vor Arbeitsplatzaktionen, schmale Seiten/Fenster, englische Seiten/Tray-Menüs, Sprachwechsel während laufender Live-Änderung, gespeicherte Auswahl und Datenerhalt. |
 | Datenerhalt beim lokalen Update | Einstellungen, Profile, originale Hardwarewerte, letzter Arbeitsplatz und Fenstersicherung per Hash unverändert. |
 | Paketgleichheit | Setup-, portable und installierte EXE per SHA-256 identisch beim lokalen Update. CI erstellt eigene Pakete. |
-| Laufende App | Version 1.3.0 und Live-Hinweis in der tatsächlich gestarteten Installation bestätigt. |
+| Sprache | Deutsch/Englisch ohne Neustart; englische Hell-/Dunkelansichten visuell geprüft. Installer, Guardian und eigener Fehlertext lokalisiert; Windows-Dialoge verwenden die Systemsprache. |
 
 Hardwareunabhängige Ergebnisse unter [validation](validation) enthalten Testnamen/Resultate, keine privaten Profile, Fensterlisten oder Monitorpfade. CI führt dieselben sicheren Tests auf Windows aus; ein Runner bestätigt keine physische DDC-Unterstützung.
 

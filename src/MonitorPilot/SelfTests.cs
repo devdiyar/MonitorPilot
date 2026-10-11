@@ -153,6 +153,7 @@ internal static class SelfTests
         Test("Default global hotkeys are unique",()=>{var keys=AppSettings.Defaults();Check(keys.Count==keys.Select(k=>(k.Modifiers,k.Key)).Distinct().Count());Check(keys.Any(k=>k.Action=="restore")&&keys.Any(k=>k.Action=="filters"));});
         LiveControlTests.Register(Test);
         CompatibilityTests.Register(Test,topology);
+        LocalizationTests.Register(Test);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);File.WriteAllText(path,JsonSerializer.Serialize(new{Passed=failed==0,Total=results.Count,Failed=failed,Results=results},Store.Json));return failed==0?0:1;
     }
 }

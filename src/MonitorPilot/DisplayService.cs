@@ -11,26 +11,26 @@ internal sealed class DisplayService
     public static byte[] Pack<T>(T[] items) where T : unmanaged => MemoryMarshal.AsBytes(items.AsSpan()).ToArray();
     public static T[] Unpack<T>(byte[] data) where T : unmanaged
     {
-        if(data.Length % Marshal.SizeOf<T>() != 0) throw new ArgumentException("Ungültige native Datenlänge.");
+        if(data.Length % Marshal.SizeOf<T>() != 0) throw new ArgumentException(L.T("Ungültige native Datenlänge."));
         return MemoryMarshal.Cast<byte,T>(data.AsSpan()).ToArray();
     }
     public static (Native.DisplayPath[] Paths, Native.DisplayMode[] Modes) Query(uint flags=2)
     {
         for(int attempt=0; attempt < 5; attempt++)
         {
-            Check(Native.GetDisplayConfigBufferSizes(flags,out uint pc,out uint mc), "Monitorliste");
+            Check(Native.GetDisplayConfigBufferSizes(flags,out uint pc,out uint mc), L.T("Monitorliste"));
             var paths = new Native.DisplayPath[pc]; var modes = new Native.DisplayMode[mc];
             int result=Native.QueryDisplayConfig(flags,ref pc,paths,ref mc,modes,IntPtr.Zero);
             if(result==122) continue;
-            Check(result,"Bildschirmkonfiguration");
+            Check(result,L.T("Bildschirmkonfiguration"));
             return (paths.Take((int)pc).ToArray(), modes.Take((int)mc).ToArray());
         }
-        throw new InvalidOperationException("Die Monitore ändern sich gerade. Bitte erneut erkennen.");
+        throw new InvalidOperationException(L.T("Die Monitore ändern sich gerade. Bitte erneut erkennen."));
     }
     public static Native.TargetName Target(Native.DisplayPath path)
     {
         var name=new Native.TargetName { Header=new() { Type=2, Size=(uint)Marshal.SizeOf<Native.TargetName>(), Adapter=path.Target.Adapter, Id=path.Target.Id } };
-        Check(Native.GetTargetName(ref name), "Monitorname"); return name;
+        Check(Native.GetTargetName(ref name), L.T("Monitorname")); return name;
     }
     public static string Source(Native.DisplayPath path)
     {
@@ -84,17 +84,17 @@ internal sealed class DisplayService
     public TopologySnapshot Resolve(TopologySnapshot snapshot)
     {
         var old=Unpack<Native.DisplayPath>(snapshot.Paths); var modes=Unpack<Native.DisplayMode>(snapshot.Modes);
-        if(old.Length != snapshot.Identities.Count || old.Length==0) throw new InvalidOperationException("Leere oder ungültige Monitoranordnung.");
+        if(old.Length != snapshot.Identities.Count || old.Length==0) throw new InvalidOperationException(L.T("Leere oder ungültige Monitoranordnung."));
         var live=Query(1).Paths.Where(x=>x.Target.Available!=0).Select(p=>(Path:p,Name:Target(p))).ToList();
         var used=new Dictionary<string,string>();
         for(int i=0;i<old.Length;i++)
         {
             string key=snapshot.Identities[i].Key;
             var candidates=live.Where(x=>x.Name.DevicePath.Equals(key,StringComparison.OrdinalIgnoreCase)).OrderByDescending(x=>x.Path.Source.Id==old[i].Source.Id).ThenByDescending(x=>(x.Path.Flags&1)!=0).ToList();
-            if(candidates.Count==0) throw new InvalidOperationException($"{snapshot.Identities[i].Name} ist nicht mehr am gespeicherten Anschluss verfügbar. Bitte anschließen oder ein neues Profil speichern.");
+            if(candidates.Count==0) throw new InvalidOperationException(L.F($"{snapshot.Identities[i].Name} ist nicht mehr am gespeicherten Anschluss verfügbar. Bitte anschließen oder ein neues Profil speichern."));
             string oldSource=$"{old[i].Source.Adapter.High}:{old[i].Source.Adapter.Low}:{old[i].Source.Id}";
             var match=candidates.FirstOrDefault(x=>!used.TryGetValue(SourceKey(x.Path),out var previous) || previous==oldSource);
-            if(match.Name.DevicePath==null) throw new InvalidOperationException("Keine konfliktfreie Monitorzuordnung möglich.");
+            if(match.Name.DevicePath==null) throw new InvalidOperationException(L.T("Keine konfliktfreie Monitorzuordnung möglich."));
             used[SourceKey(match.Path)]=oldSource;
             var path=old[i]; path.Source.Adapter=match.Path.Source.Adapter; path.Source.Id=match.Path.Source.Id;
             path.Target.Adapter=match.Path.Target.Adapter; path.Target.Id=match.Path.Target.Id; path.Target.Available=1;
@@ -109,16 +109,16 @@ internal sealed class DisplayService
     public static TopologySnapshot Select(TopologySnapshot snapshot,IEnumerable<string> selected,string primary)
     {
         var wanted=selected.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if(wanted.Count==0 || !wanted.Contains(primary)) throw new InvalidOperationException("Mindestens ein Monitor und ein aktiver Hauptmonitor sind erforderlich.");
+        if(wanted.Count==0 || !wanted.Contains(primary)) throw new InvalidOperationException(L.T("Mindestens ein Monitor und ein aktiver Hauptmonitor sind erforderlich."));
         var paths=Unpack<Native.DisplayPath>(snapshot.Paths); var modes=Unpack<Native.DisplayMode>(snapshot.Modes);
         var indexes=Enumerable.Range(0,paths.Length).Where(i=>wanted.Contains(snapshot.Identities[i].Key)).OrderByDescending(i=>snapshot.Identities[i].Key.Equals(primary,StringComparison.OrdinalIgnoreCase)).ToArray();
-        if(indexes.Length != wanted.Count) throw new InvalidOperationException("Ein ausgewählter Monitor fehlt in der gesicherten Anordnung. Zuerst alle erweitern.");
+        if(indexes.Length != wanted.Count) throw new InvalidOperationException(L.T("Ein ausgewählter Monitor fehlt in der gesicherten Anordnung. Zuerst alle erweitern."));
         uint primaryIndex=paths[indexes[0]].Source.ModeIndex;
-        if(primaryIndex >= modes.Length) throw new InvalidOperationException("Die Position des Hauptmonitors ist unbekannt.");
+        if(primaryIndex >= modes.Length) throw new InvalidOperationException(L.T("Die Position des Hauptmonitors ist unbekannt."));
         var origin=modes[primaryIndex].Source.Position;
         foreach(uint modeIndex in indexes.Select(i=>paths[i].Source.ModeIndex).Distinct())
         {
-            if(modeIndex>=modes.Length) throw new InvalidOperationException("Ein Monitormodus fehlt.");
+            if(modeIndex>=modes.Length) throw new InvalidOperationException(L.T("Ein Monitormodus fehlt."));
             modes[modeIndex].Source.Position.X-=origin.X; modes[modeIndex].Source.Position.Y-=origin.Y;
         }
         return new() {Paths=Pack(indexes.Select(i=>paths[i]).ToArray()), Modes=Pack(modes), Identities=indexes.Select(i=>Store.Clone(snapshot.Identities[i])).ToList()};
@@ -126,15 +126,15 @@ internal sealed class DisplayService
     public void Validate(TopologySnapshot snapshot)
     {
         var paths=Unpack<Native.DisplayPath>(snapshot.Paths); var modes=Unpack<Native.DisplayMode>(snapshot.Modes);
-        Check(Native.SetDisplayConfig((uint)paths.Length,paths,(uint)modes.Length,modes,0x20|0x40),"Konfiguration prüfen");
+        Check(Native.SetDisplayConfig((uint)paths.Length,paths,(uint)modes.Length,modes,0x20|0x40),L.T("Konfiguration prüfen"));
     }
     public void Apply(TopologySnapshot snapshot)
     {
         var resolved=Resolve(snapshot); Validate(resolved);
         var paths=Unpack<Native.DisplayPath>(resolved.Paths); var modes=Unpack<Native.DisplayMode>(resolved.Modes);
-        Check(Native.SetDisplayConfig((uint)paths.Length,paths,(uint)modes.Length,modes,0x20|0x80),"Monitoranordnung anwenden");
+        Check(Native.SetDisplayConfig((uint)paths.Length,paths,(uint)modes.Length,modes,0x20|0x80),L.T("Monitoranordnung anwenden"));
     }
-    public void Extend() => Check(Native.SetDisplayConfig(0,null,0,null,0x80|0x4),"Alle Monitore erweitern");
+    public void Extend() => Check(Native.SetDisplayConfig(0,null,0,null,0x80|0x4),L.T("Alle Monitore erweitern"));
     private static readonly object modesGate=new();
     private static readonly Dictionary<string,List<Native.DevMode>> modeLists=new(StringComparer.OrdinalIgnoreCase);
     internal static List<Native.DevMode> ModesFor(string device,Func<List<Native.DevMode>> read)
@@ -161,15 +161,15 @@ internal sealed class DisplayService
     public void ChangeMode(string device,Native.DevMode mode,uint orientation)
     {
         var current=new Native.DevMode {Size=(ushort)Marshal.SizeOf<Native.DevMode>()};
-        if(!Native.EnumDisplaySettings(device,-1,ref current)) throw new InvalidOperationException("Aktueller Monitormodus nicht lesbar.");
+        if(!Native.EnumDisplaySettings(device,-1,ref current)) throw new InvalidOperationException(L.T("Aktueller Monitormodus nicht lesbar."));
         current.Width=mode.Width; current.Height=mode.Height; current.Frequency=mode.Frequency;
         if((current.Orientation % 2)!=(orientation % 2)) (current.Width,current.Height)=(current.Height,current.Width);
         current.Orientation=orientation; current.Fields=0x80000|0x100000|0x400000|0x80;
         int result=Native.ChangeDisplaySettingsEx(device,ref current,IntPtr.Zero,2,IntPtr.Zero);
-        if(result!=0) throw new InvalidOperationException($"Dieser Anzeigemodus wird abgelehnt (Windows {result}).");
+        if(result!=0) throw new InvalidOperationException(L.F($"Dieser Anzeigemodus wird abgelehnt (Windows {result})."));
         result=Native.ChangeDisplaySettingsEx(device,ref current,IntPtr.Zero,0,IntPtr.Zero);
-        if(result!=0) throw new InvalidOperationException($"Anzeigemodus konnte nicht gesetzt werden (Windows {result}).");
+        if(result!=0) throw new InvalidOperationException(L.F($"Anzeigemodus konnte nicht gesetzt werden (Windows {result})."));
     }
-    public static string ConnectionName(int output)=>output switch { 0=>"VGA",4=>"DVI",5=>"HDMI",6=>"LVDS",10=>"DisplayPort",11=>"DisplayPort intern",15=>"Miracast",16=>"Indirekt",_=>"Display" };
+    public static string ConnectionName(int output)=>output switch { 0=>"VGA",4=>"DVI",5=>"HDMI",6=>"LVDS",10=>"DisplayPort",11=>L.T("DisplayPort intern"),15=>"Miracast",16=>L.T("Indirekt"),_=>"Display" };
     public static void Check(int code,string action) { if(code!=0) throw new Win32Exception(code,$"{action}: {new Win32Exception(code).Message} ({code})"); }
 }

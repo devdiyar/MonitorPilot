@@ -1,7 +1,7 @@
 {
   "Passed": true,
-  "Version": "1.3.0.0",
-  "WritesAtSimulatedBoundary": 7,
+  "Version": "1.4.0.0",
+  "WritesAtSimulatedBoundary": 10,
   "Checks": [
     {
       "Name": "Moving color controls starts live work without disabling the page",
@@ -57,6 +57,42 @@
     },
     {
       "Name": "Main window fits a small scaled work area",
+      "Passed": true
+    },
+    {
+      "Name": "Switching language preserves the pending live brightness target",
+      "Passed": true
+    },
+    {
+      "Name": "English controls complete the same live operation",
+      "Passed": true
+    },
+    {
+      "Name": "English tray exposes live controls and translated actions",
+      "Passed": true
+    },
+    {
+      "Name": "English tray changes both monitors live without an apply button",
+      "Passed": true
+    },
+    {
+      "Name": "All five English pages render translated headings",
+      "Passed": true
+    },
+    {
+      "Name": "English native tray menu contains language and translated monitor actions",
+      "Passed": true
+    },
+    {
+      "Name": "Tray language selection switches immediately and persists",
+      "Passed": true
+    },
+    {
+      "Name": "Language selection persists without rewriting profiles or aliases",
+      "Passed": true
+    },
+    {
+      "Name": "Switching back to German preserves confirmed hardware values",
       "Passed": true
     }
   ]

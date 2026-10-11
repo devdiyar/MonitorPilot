@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 — 2026-10-11
+
+- Full English app interface alongside German: all pages, tray controls and menus, dialogs, recovery prompts, shortcut labels, statuses, and app-generated errors.
+- Persistent language selection in Settings and the tray menu, applied immediately without restarting or re-querying monitor hardware.
+- Language changes preserve pending live slider targets, confirmed monitor values, custom aliases, profiles, and key bindings.
+- Localized installer and uninstaller prompts follow the saved app language; Windows-owned dialogs keep the Windows language.
+- 54 self-tests and 23 WPF/tray integration checks, including language switching during live adjustments and untranslated user names.
+- English screenshots and updated bilingual documentation.
+
 ## 1.3.0 — 2026-10-11
 
 - Live brightness, contrast, RGB, white point, and dimming in app and tray; removed manual brightness/color Apply buttons.

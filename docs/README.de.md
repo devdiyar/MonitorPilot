@@ -8,7 +8,7 @@
 
 MonitorPilot ist eine kostenlose Windows-App für mehrere Monitore. Helligkeit, Kontrast, RGB, unterstützte Weißpunkt-Presets und Softwaredimmung wirken **live beim Verstellen**, auch im Tray. Du kannst Zusatzmonitore für den Fokusmodus deaktivieren und danach den gesicherten Arbeitsplatz zurückholen.
 
-Die Bilder zeigen die echte Oberfläche mit anonymen Beispieldaten. Die App ist derzeit deutschsprachig.
+Die Bilder zeigen die echte Oberfläche mit anonymen Beispieldaten. Die App unterstützt **Deutsch und Englisch**. Unter **Einstellungen → Sprache** oder **Rechtsklick auf das Tray-Symbol → Sprache** wechselst du sofort, ohne Neustart. Die Auswahl wird gespeichert; bestehende Installationen bleiben zunächst auf Deutsch.
 
 ## Installieren und starten
 
@@ -28,7 +28,7 @@ Fenster kommen zurück, solange dieselben Fenster und Prozesse existieren. Gesch
 
 ## Tray und Hintergrund
 
-Linksklick: Schnellsteuerung mit gemeinsamem Regler, Regler pro Monitor, Fokus/Wiederherstellung und Profilen. Rechtsklick: Monitore, Helligkeitsstufen, Dimmung, Weißpunkt, Fenster, Standby, Design, Autostart und Zeitplan.
+Linksklick: Schnellsteuerung mit gemeinsamem Regler, Regler pro Monitor, Fokus/Wiederherstellung und Profilen. Rechtsklick: Monitore, Helligkeitsstufen, Dimmung, Weißpunkt, Fenster, Standby, Design, Sprache, Autostart und Zeitplan.
 
 Das X versteckt das Hauptfenster. **Beenden** im Tray beendet die App und wartet auf ausstehende Live-Änderungen. Standardkürzel: **Strg + Alt + Umschalt** plus M (öffnen), F (Fokus), R (Wiederherstellung), Pfeil hoch/runter (±5 %), W (Fenster sammeln), 0 (Dimmung entfernen). Kürzel sind änderbar; Konflikte werden angezeigt.
 

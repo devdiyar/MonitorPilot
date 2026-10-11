@@ -66,15 +66,15 @@ internal static class PerformanceBenchmark
         typeof(MainWindow).GetField("currentPage",flags)!.SetValue(window,"colors");
         typeof(MainWindow).GetMethod("Render",flags,null,Type.EmptyTypes,null)!.Invoke(window,null);
         window.Measure(new Size(1440,980));window.Arrange(new Rect(0,0,1440,980));window.UpdateLayout();
-        var monitor=controller.Main!;var slider=Find<Slider>(window,"Helligkeit");var contrast=Find<Slider>(window,"Kontrast");var naming=Find<TextBox>(window,"Monitorname");
+        var monitor=controller.Main!;var slider=Find<Slider>(window,L.T("Helligkeit"));var contrast=Find<Slider>(window,L.T("Kontrast"));var naming=Find<TextBox>(window,L.T("Monitorname"));
         int draft=Math.Max(0,monitor.Hardware.Brightness!.Percent-3);slider.Value=draft;naming.Text="Unübernommener Monitorname";
         var fresh=Store.Clone(monitor.Hardware);fresh.Brightness!.Current=fresh.Brightness.FromPercent(Math.Min(100,fresh.Brightness.Percent+1));fresh.Contrast!.Current=fresh.Contrast.FromPercent(51);monitor.Hardware=fresh;
         var ready=(Action)typeof(AppController).GetField("HardwareDiscovered",flags)!.GetValue(controller)!;ready();
-        var checks=new List<UiCheck>{new("Color draft survives hardware discovery",slider.Value==draft&&ReferenceEquals(slider,Find<Slider>(window,"Helligkeit"))),new("Untouched control receives fresh hardware value",contrast.Value==51),new("Monitor name draft survives hardware discovery",naming.Text=="Unübernommener Monitorname")};
+        var checks=new List<UiCheck>{new("Color draft survives hardware discovery",slider.Value==draft&&ReferenceEquals(slider,Find<Slider>(window,L.T("Helligkeit")))),new("Untouched control receives fresh hardware value",contrast.Value==51),new("Monitor name draft survives hardware discovery",naming.Text=="Unübernommener Monitorname")};
         var quick=new TrayQuickWindow(controller,()=>{},()=>{},()=>{});quick.Measure(new Size(430,850));quick.Arrange(new Rect(0,0,430,850));quick.UpdateLayout();
-        var quickSlider=Find<Slider>(quick,controller.Name(monitor)+": Helligkeit");quickSlider.Value=draft;
+        var quickSlider=Find<Slider>(quick,controller.Name(monitor)+L.T(": Helligkeit"));quickSlider.Value=draft;
         monitor.Hardware=Store.Clone(fresh);monitor.Hardware.Brightness!.Current=monitor.Hardware.Brightness.FromPercent(Math.Min(100,fresh.Brightness.Percent+1));ready();
-        checks.Add(new("Tray brightness draft survives hardware discovery",quickSlider.Value==draft&&ReferenceEquals(quickSlider,Find<Slider>(quick,controller.Name(monitor)+": Helligkeit"))));
+        checks.Add(new("Tray brightness draft survives hardware discovery",quickSlider.Value==draft&&ReferenceEquals(quickSlider,Find<Slider>(quick,controller.Name(monitor)+L.T(": Helligkeit")))));
         quick.Close();typeof(MainWindow).GetField("loaded",flags)!.SetValue(window,false);return checks;
     }
     private static T Find<T>(DependencyObject root,string name) where T:DependencyObject

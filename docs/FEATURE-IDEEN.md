@@ -1,6 +1,6 @@
 # Weitere Ausbaustufen
 
-Die folgende Liste beschreibt mögliche Erweiterungen; sie sind in Version 1.3 nicht bereits implementiert. Für die aktuelle Version stehen Live-Regler, Tray-Steuerung, Profile und Rückkehrschutz bereits zur Verfügung.
+Die folgende Liste beschreibt mögliche Erweiterungen; sie sind in Version 1.4 nicht bereits implementiert. Für die aktuelle Version stehen Live-Regler, Tray-Steuerung, Profile und Rückkehrschutz bereits zur Verfügung.
 
 ## Besonders nützlich für fünf Monitore
 

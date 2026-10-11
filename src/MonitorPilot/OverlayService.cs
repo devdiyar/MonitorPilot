@@ -44,7 +44,7 @@ internal sealed class OverlayService
     {
         foreach(var m in monitors.Where(m=>m.Active))
         {
-            var label=Theme.Stack(Theme.Label(m.Number.ToString("00"),60,Theme.Accent,true),Theme.Label(m.Name,20),Theme.Label(m.Primary?"Hauptmonitor":m.Connection,14,Theme.Muted));
+            var label=Theme.Stack(Theme.Label(m.Number.ToString("00"),60,Theme.Accent,true),Theme.Label(m.Name,20),Theme.Label(m.Primary?L.T("Hauptmonitor"):m.Connection,14,Theme.Muted));
             var w=new Window {Width=330,Height=200,WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,ShowInTaskbar=false,ShowActivated=false,Topmost=true,Background=Theme.Background,Content=Theme.Panel(label),Left=m.X+60,Top=m.Y+60};
             w.Show();Native.SetWindowPos(new WindowInteropHelper(w).Handle,new IntPtr(-1),m.X+60,m.Y+60,340,210,0x10|0x40);
             var timer=new DispatcherTimer {Interval=TimeSpan.FromSeconds(4)};timer.Tick+=(_,_)=>{timer.Stop();w.Close();};timer.Start();
@@ -72,7 +72,7 @@ internal sealed class OverlayService
             {
                 string color=pattern switch {"Weiß"=>"#FFFFFF","Rot"=>"#FF0000","Grün"=>"#00FF00","Blau"=>"#0000FF",_=>"#000000"};root.Background=Theme.Brush(color);
             }
-            var close=Theme.Button($"{m.Number:00} · {m.Name}    |    {pattern}    |    Alle Testbilder schließen (Esc)",ClosePatterns);
+            var close=Theme.Button(L.F($"{m.Number:00} · {m.Name}    |    {L.T(pattern)}    |    Alle Testbilder schließen (Esc)"),ClosePatterns);
             close.HorizontalAlignment=HorizontalAlignment.Center;close.VerticalAlignment=VerticalAlignment.Bottom;close.Margin=new Thickness(30);root.Children.Add(close);
             var w=new Window {WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,ShowInTaskbar=false,Topmost=true,Content=root};
             w.PreviewKeyDown+=(_,e)=>{if(e.Key==System.Windows.Input.Key.Escape)ClosePatterns();};testWindows.Add(w);Place(w,m);

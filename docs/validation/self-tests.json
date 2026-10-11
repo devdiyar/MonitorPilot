@@ -1,6 +1,6 @@
 {
   "Passed": true,
-  "Total": 47,
+  "Total": 54,
   "Failed": 0,
   "Results": [
     {
@@ -189,6 +189,34 @@
     },
     {
       "Name": "Recovery launches the application when running through the dotnet host",
+      "Passed": true
+    },
+    {
+      "Name": "Language defaults preserve German and reject unknown settings",
+      "Passed": true
+    },
+    {
+      "Name": "English resources preserve every formatting argument",
+      "Passed": true
+    },
+    {
+      "Name": "English formatting keeps names and numbers intact",
+      "Passed": true
+    },
+    {
+      "Name": "DDC status switches language without probing hardware",
+      "Passed": true
+    },
+    {
+      "Name": "Language persistence preserves aliases and custom shortcuts",
+      "Passed": true
+    },
+    {
+      "Name": "Shortcut display follows language without changing key codes",
+      "Passed": true
+    },
+    {
+      "Name": "Profile validation errors use the selected app language",
       "Passed": true
     }
   ]

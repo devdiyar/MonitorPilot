@@ -64,6 +64,35 @@ internal static class LiveUiBenchmark
             Check("Narrow pages stack both panels without squeezing the controls",right.TranslatePoint(new Point(0,0),columns).Y>=80&&left.ActualWidth>=550&&right.ActualWidth>=550);
             var small=new Window();Theme.FitToWorkArea(small,new Rect(0,0,910,500));
             Check("Main window fits a small scaled work area",small.Width<=910&&small.Height<=500&&small.MinWidth<=small.Width&&small.MinHeight<=small.Height);small.Close();
+            Store.Save("profiles.json",new List<ProfileEntry>());var profileBytes=File.ReadAllBytes(Store.FilePath("profiles.json"));
+            var aliasesBefore=JsonSerializer.Serialize(controller.Settings.Aliases,Store.Json);
+            controller.LiveControl(a,MonitorControl.Brightness,82);
+            Page("settings");var language=Descendants(window).OfType<ComboBox>().Single(x=>AutomationProperties.GetAutomationId(x)=="AppLanguage");language.SelectedIndex=1;
+            Page("colors");
+            Check("Switching language preserves the pending live brightness target",L.Language=="en"&&Find<Slider>(window,"Brightness").Value==82&&controller.ControlPercent(a,MonitorControl.Brightness)==82);
+            Wait(controller.Live.DrainAsync());Pump();
+            Check("English controls complete the same live operation",a.Hardware.Brightness!.Current==174&&!controller.Busy);
+            quick.Close();quick=new TrayQuickWindow(controller,()=>{},()=>{},()=>{});
+            Check("English tray exposes live controls and translated actions",Find<Slider>(quick,"QA A: Brightness").Value==82&&Descendants(quick).OfType<Button>().Any(x=>Equals(x.Content,"Settings"))&&quick.Title=="MonitorPilot · Quick controls");
+            Find<Slider>(quick,"All monitors: Brightness").Value=63;Wait(controller.Live.DrainAsync());Pump();
+            Check("English tray changes both monitors live without an apply button",a.Hardware.Brightness!.Current==136&&b.Hardware.Brightness!.Current==136&&!Descendants(quick).OfType<Button>().Any(x=>Equals(x.Content,"Apply brightness")));
+            bool pagesEnglish=true;
+            foreach(var expected in new[]{("monitors","Monitors"),("colors","Picture & color"),("profiles","Workspace profiles"),("calibrate","Color comparison"),("settings","Settings")})
+            {
+                Page(expected.Item1);pagesEnglish&=Descendants(window).OfType<TextBlock>().Any(x=>x.Text==expected.Item2);
+            }
+            Check("All five English pages render translated headings",pagesEnglish);
+            using(var menu=(System.Windows.Forms.ContextMenuStrip)typeof(MainWindow).GetMethod("CreateTrayMenu",flags)!.Invoke(window,null)!)
+            {
+                var items=menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().ToList();
+                Check("English native tray menu contains language and translated monitor actions",items.Any(x=>x.Text=="Language"&&x.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>().Any(i=>i.Text=="English"&&i.Checked))&&items.Any(x=>x.Text=="Extend all monitors")&&items.Any(x=>x.Text=="Exit MonitorPilot"));
+                items.Single(x=>x.Text=="Language").DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>().Single(x=>x.Text=="Deutsch").PerformClick();
+                Check("Tray language selection switches immediately and persists",L.Language=="de"&&Store.Read<AppSettings>("settings.json")!.Language=="de");
+            }
+            typeof(MainWindow).GetMethod("SetLanguage",flags)!.Invoke(window,new object[]{"en"});Page("settings");
+            Check("Language selection persists without rewriting profiles or aliases",Store.Read<AppSettings>("settings.json")!.Language=="en"&&File.ReadAllBytes(Store.FilePath("profiles.json")).SequenceEqual(profileBytes)&&JsonSerializer.Serialize(controller.Settings.Aliases,Store.Json)==aliasesBefore);
+            var german=Descendants(window).OfType<ComboBox>().Single(x=>AutomationProperties.GetAutomationId(x)=="AppLanguage");german.SelectedIndex=0;Page("colors");
+            Check("Switching back to German preserves confirmed hardware values",L.Language=="de"&&Find<Slider>(window,"Helligkeit").Value==63&&controller.Settings.Language=="de");
         }
         catch(Exception ex){checks.Add(new{Name="UI execution",Passed=false,Error=ex.ToString()});passed=false;}
         finally

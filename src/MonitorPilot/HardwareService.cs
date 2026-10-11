@@ -45,7 +45,7 @@ internal sealed class HardwareService
         {
             WithMonitor(monitor,h=>monitor.Hardware=Read(monitor,h,cached:monitor.Hardware,forceCapabilities:forceCapabilities));
             int count=new[] {monitor.Hardware.Brightness,monitor.Hardware.Contrast,monitor.Hardware.Red,monitor.Hardware.Green,monitor.Hardware.Blue}.Count(x=>x!=null);
-            monitor.DdcStatus=count>0 ? $"DDC/CI verbunden · {count} Regler" : "DDC/CI nicht verfügbar · Im Bildschirmmenü aktivieren";
+            monitor.DdcControlCount=count;monitor.DdcStatus=count>0 ? "DDC/CI verbunden · {0} Regler" : "DDC/CI nicht verfügbar · Im Bildschirmmenü aktivieren";
         }
         catch(Exception ex) {monitor.Hardware=new();monitor.DdcStatus="DDC/CI nicht erreichbar";Store.Log($"DDC probe {monitor.Name}: {ex.Message}");}
     }
@@ -122,13 +122,13 @@ internal sealed class HardwareService
     {
         return ForMonitor(monitor,()=>
         {
-            if(!Native.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor.Handle,out uint count) || count==0) throw new InvalidOperationException("Kein physischer Monitor erreichbar.");
-            if(count>16) throw new InvalidOperationException("Ungültige Anzahl physischer Monitore.");
+            if(!Native.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor.Handle,out uint count) || count==0) throw new InvalidOperationException(L.T("Kein physischer Monitor erreichbar."));
+            if(count>16) throw new InvalidOperationException(L.T("Ungültige Anzahl physischer Monitore."));
             var handles=new Native.PhysicalMonitor[count];
             if(!Native.GetPhysicalMonitorsFromHMONITOR(monitor.Handle,count,handles)) throw new Win32Exception(Marshal.GetLastWin32Error());
             try
             {
-                if(count!=1) throw new InvalidOperationException("Gespiegelte physische Monitore können nicht eindeutig einzeln angesteuert werden.");
+                if(count!=1) throw new InvalidOperationException(L.T("Gespiegelte physische Monitore können nicht eindeutig einzeln angesteuert werden."));
                 return action(handles[0].Handle);
             }
             finally { Native.DestroyPhysicalMonitors(count,handles); }
@@ -147,7 +147,7 @@ internal sealed class HardwareService
         {
             // Relative hotkeys must start from the live brightness, including OSD changes.
             var before=Read(monitor,h,new(){Brightness=new()},monitor.Hardware);
-            if(before.Brightness==null)throw new InvalidOperationException("Hardware-Helligkeit ist nicht erreichbar. DDC/CI im Bildschirmmenü prüfen.");
+            if(before.Brightness==null)throw new InvalidOperationException(L.T("Hardware-Helligkeit ist nicht erreichbar. DDC/CI im Bildschirmmenü prüfen."));
             int target=relative?Math.Clamp(before.Brightness.Percent+percent,0,100):percent;
             return monitor.Hardware=Apply(monitor,h,BrightnessOnly(before,target),true,before);
         });
@@ -168,26 +168,26 @@ internal sealed class HardwareService
         if(temperatureChanged)
         {
             uint t=desired.Temperature!.Value;
-            if(t<1 || t>8 || (before.TemperatureMask & (1u << ((int)t-1)))==0) throw new InvalidOperationException("Diese Farbtemperatur wird vom Monitor nicht unterstützt.");
-            if(!Native.SetMonitorColorTemperature(h,t)) throw new Win32Exception(Marshal.GetLastWin32Error(),"Farbtemperatur abgelehnt.");
+            if(t<1 || t>8 || (before.TemperatureMask & (1u << ((int)t-1)))==0) throw new InvalidOperationException(L.T("Diese Farbtemperatur wird vom Monitor nicht unterstützt."));
+            if(!Native.SetMonitorColorTemperature(h,t)) throw new Win32Exception(Marshal.GetLastWin32Error(),L.T("Farbtemperatur abgelehnt."));
             Thread.Sleep(80);before=Read(monitor,h,cached:before);
         }
-        Set(h,"Helligkeit",before.Brightness,desired.Brightness,Native.SetMonitorBrightness,0x10);
-        Set(h,"Kontrast",before.Contrast,desired.Contrast,Native.SetMonitorContrast,0x12);
-        Set(h,"Rot",before.Red,desired.Red,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,0,v),0x16);
-        Set(h,"Grün",before.Green,desired.Green,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,1,v),0x18);
-        Set(h,"Blau",before.Blue,desired.Blue,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,2,v),0x1A);
+        Set(h,L.T("Helligkeit"),before.Brightness,desired.Brightness,Native.SetMonitorBrightness,0x10);
+        Set(h,L.T("Kontrast"),before.Contrast,desired.Contrast,Native.SetMonitorContrast,0x12);
+        Set(h,L.T("Rot"),before.Red,desired.Red,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,0,v),0x16);
+        Set(h,L.T("Grün"),before.Green,desired.Green,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,1,v),0x18);
+        Set(h,L.T("Blau"),before.Blue,desired.Blue,(p,v)=>Native.SetMonitorRedGreenOrBlueGain(p,2,v),0x1A);
         // Gain/preset changes can affect the other color channels and the white point.
         bool colors=temperatureChanged||desired.Red!=null||desired.Green!=null||desired.Blue!=null;
         var actual=ReadBack(desired,()=>Read(monitor,h,desired,before,colors));
-        Verify("Helligkeit",desired.Brightness,actual.Brightness);Verify("Kontrast",desired.Contrast,actual.Contrast);
-        Verify("Rot",desired.Red,actual.Red);Verify("Grün",desired.Green,actual.Green);Verify("Blau",desired.Blue,actual.Blue);
-        if(desired.Temperature.HasValue && actual.Temperature!=desired.Temperature) throw new InvalidOperationException("Der Monitor bestätigt die Farbtemperatur nicht.");
+        Verify(L.T("Helligkeit"),desired.Brightness,actual.Brightness);Verify(L.T("Kontrast"),desired.Contrast,actual.Contrast);
+        Verify(L.T("Rot"),desired.Red,actual.Red);Verify(L.T("Grün"),desired.Green,actual.Green);Verify(L.T("Blau"),desired.Blue,actual.Blue);
+        if(desired.Temperature.HasValue && actual.Temperature!=desired.Temperature) throw new InvalidOperationException(L.T("Der Monitor bestätigt die Farbtemperatur nicht."));
         Store.Log($"Hardware applied and read back: {monitor.Name}");return actual;
     }
     private static void Verify(string label,ControlValue? expected,ControlValue? actual)
     {
-        if(expected!=null && (actual==null || Math.Abs((long)expected.Current-actual.Current)>1)) throw new InvalidOperationException($"{label} wurde vom Monitor nicht bestätigt. Bitte neu erkennen; bereits übernommene Regler bleiben gesetzt.");
+        if(expected!=null && (actual==null || Math.Abs((long)expected.Current-actual.Current)>1)) throw new InvalidOperationException(L.F($"{label} wurde vom Monitor nicht bestätigt. Bitte neu erkennen; bereits übernommene Regler bleiben gesetzt."));
     }
     internal static HardwareState ReadBack(HardwareState desired,Func<HardwareState> read)
     {
@@ -204,11 +204,11 @@ internal sealed class HardwareService
     private static void Set(IntPtr h,string label,ControlValue? current,ControlValue? desired,Setter set,byte code)
     {
         if(desired==null) return;
-        if(current==null) throw new InvalidOperationException($"{label} ist an diesem Monitor nicht verfügbar.");
-        if(desired.Current<current.Min || desired.Current>current.Max) throw new InvalidOperationException($"{label} liegt außerhalb des Monitorregelbereichs.");
+        if(current==null) throw new InvalidOperationException(L.F($"{label} ist an diesem Monitor nicht verfügbar."));
+        if(desired.Current<current.Min || desired.Current>current.Max) throw new InvalidOperationException(L.F($"{label} liegt außerhalb des Monitorregelbereichs."));
         if(current.Current==desired.Current) return;
         bool result=current.ViaVcp ? Native.SetVCPFeature(h,code,desired.Current) : set(h,desired.Current);
-        if(!result) throw new Win32Exception(Marshal.GetLastWin32Error(),$"{label} konnte nicht gesetzt werden. DDC/CI im Bildschirmmenü prüfen.");
+        if(!result) throw new Win32Exception(Marshal.GetLastWin32Error(),L.F($"{label} konnte nicht gesetzt werden. DDC/CI im Bildschirmmenü prüfen."));
         // Both Windows setters already wait for the DDC transaction (~50 ms).
         // Readback adds a bounded wait only if this monitor has not acknowledged it.
     }

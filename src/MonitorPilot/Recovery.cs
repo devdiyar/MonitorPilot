@@ -25,8 +25,8 @@ internal sealed class RecoveryGuard : IDisposable
         ready=new(false,EventResetMode.ManualReset,Name(token,"ready"));
         var start=StartInfo(Environment.ProcessPath!,AppContext.BaseDirectory);
         start.ArgumentList.Add("--watchdog"); start.ArgumentList.Add(path); start.ArgumentList.Add(token);
-        process=Process.Start(start) ?? throw new InvalidOperationException("Wiederherstellungsprozess konnte nicht starten.");
-        if(!await Task.Run(()=>ready.WaitOne(TimeSpan.FromSeconds(8)))) { accept.Set(); throw new InvalidOperationException("Wiederherstellung nicht bereit; Bildschirmänderung wurde abgebrochen."); }
+        process=Process.Start(start) ?? throw new InvalidOperationException(L.T("Wiederherstellungsprozess konnte nicht starten."));
+        if(!await Task.Run(()=>ready.WaitOne(TimeSpan.FromSeconds(8)))) { accept.Set(); throw new InvalidOperationException(L.T("Wiederherstellung nicht bereit; Bildschirmänderung wurde abgebrochen.")); }
         Elapsed.Start();
     }
     public async Task<bool> Accept()
@@ -41,7 +41,7 @@ internal sealed class RecoveryGuard : IDisposable
         rollback?.Set();
         if(process!=null) await process.WaitForExitAsync();
         if(File.Exists(path+".result")) return System.Text.Json.JsonSerializer.Deserialize<RecoveryResult>(File.ReadAllText(path+".result"),Store.Json)!;
-        return new() {Restored=false,Error="Der Wiederherstellungsprozess hat kein Ergebnis geliefert."};
+        return new() {Restored=false,Error=L.T("Der Wiederherstellungsprozess hat kein Ergebnis geliefert.")};
     }
     public void Dispose() { accept?.Dispose(); rollback?.Dispose(); ready?.Dispose(); process?.Dispose(); }
     private static string Name(string token,string part)=>"Local\\MonitorPilot."+token+"."+part;

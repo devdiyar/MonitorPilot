@@ -13,11 +13,18 @@
 
 <p align="center"><a href="https://github.com/devdiyar/MonitorPilot/releases/latest"><strong>Download</strong></a> · <a href="docs/README.de.md">Deutsch</a> · <a href="docs/COMPATIBILITY.md">Compatibility</a> · <a href="https://github.com/devdiyar/MonitorPilot/issues">Report an issue</a></p>
 
-![Dark overview with five displays](docs/images/overview-dark.png)
+![Dark overview with five displays](docs/images/overview-dark-en.png)
 
 MonitorPilot is a free, native Windows app for people who work with several monitors. Adjust brightness and color while moving the sliders, switch to a single focus display, and restore your saved display layout and the positions of still-open windows. It runs in the notification area, so controls stay close when the main window is closed.
 
-The interface is currently in **German**. The images show the actual WPF interface rendered with anonymous example data.
+The app supports **Deutsch and English**. Switch instantly under **Settings → Language** or **right-click the tray icon → Language**. Your choice is saved; existing installations stay German until you choose English. The images show the actual WPF interface rendered with anonymous example data.
+
+<details>
+<summary><strong>Choose your language</strong></summary>
+
+![English language settings](docs/images/language-settings-en.png)
+
+</details>
 
 ## Get started
 
@@ -25,7 +32,7 @@ The interface is currently in **German**. The images show the actual WPF interfa
 2. For installation, extract **MonitorPilot-Setup-win-x64.zip** and run **MonitorPilot-Setup.exe**. For use without installation, extract **MonitorPilot-Portable-win-x64.zip** and run **MonitorPilot.exe**.
 3. Enable **DDC/CI** in the external monitor's own settings if hardware controls are unavailable.
 4. Move a brightness or color slider. Changes apply live; there is no separate brightness/color Apply button.
-5. Save an **Arbeitsprofil** before setting up a focus workspace. Use **Arbeitsplatz wiederherstellen** to bring the saved workspace back.
+5. Save a **workspace profile** before setting up a focus workspace. Use **Restore workspace** to bring the saved workspace back.
 
 The executable includes the .NET runtime. No separate .NET installation, account, administrator privileges, or cloud service is required. The installer creates Start menu and desktop shortcuts and an entry in Windows' installed apps. Autostart is opt-in. Builds are currently **unsigned**; download them from this repository's Releases page. Releases include SHA-256 checksums.
 
@@ -37,7 +44,7 @@ Target: Windows 10/11 **x64**. Windows 11 with five physical monitors is the tes
 | --- | --- |
 | **Live picture controls** | Brightness, contrast, RGB gain, and supported white-point presets through DDC/CI; final values are read back from the monitor. |
 | **Tray quick control** | Live sliders for every active display, a master brightness slider, focus/restore, and saved profiles. |
-| **Tray menu** | Monitor selection, brightness presets, dimming, supported white points, profiles, window tools, themes, autostart, schedules, and standby. |
+| **Tray menu** | Monitor selection, brightness presets, dimming, supported white points, profiles, window tools, themes, language selection, autostart, schedules, and standby. |
 | **Focus mode** | Save the workspace, optionally collect open windows, and deactivate the extra displays in Windows. |
 | **Workspace restore** | Restore display configuration, still-open windows, readable monitor controls, and software dimming. |
 | **Display configuration** | Active displays, main/focus display, desktop positions, resolution, refresh rate, and rotation. |
@@ -54,21 +61,21 @@ Layout and resolution changes keep an explicit confirmation step because they ca
 <details>
 <summary><strong>Light theme</strong></summary>
 
-![Light overview](docs/images/overview-light.png)
+![Light overview](docs/images/overview-light-en.png)
 
 </details>
 
 <details>
 <summary><strong>Live brightness and color</strong></summary>
 
-![Live picture controls](docs/images/color-controls.png)
+![Live picture controls](docs/images/color-controls-en.png)
 
 </details>
 
 <details>
 <summary><strong>Tray quick control</strong></summary>
 
-<img src="docs/images/tray-controls.png" width="430" alt="Tray controls with live sliders and no brightness Apply button">
+<img src="docs/images/tray-controls-en.png" width="430" alt="Tray controls with live sliders and no brightness Apply button">
 
 </details>
 

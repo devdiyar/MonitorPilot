@@ -44,9 +44,10 @@ MonitorPilot $version - Windows x64
 $kind edition. Extract this complete folder before starting the executable.
 Setup: run MonitorPilot-Setup.exe. Portable: run MonitorPilot.exe.
 No separate .NET installation or administrator privileges are required.
-The interface is currently German. Brightness and color sliders apply live.
+Deutsch / English: Settings > Language, or right-click tray > Language.
+The language changes immediately and is saved. Brightness and color sliders apply live.
 Enable DDC/CI in external monitors for hardware controls.
-Closing the window keeps the app in the tray; choose Beenden to exit.
+Closing the window keeps the app in the tray; choose Exit MonitorPilot / MonitorPilot beenden to exit.
 Display changes require confirmation; no confirmation triggers rollback.
 Profiles and recovery data: %LOCALAPPDATA%\MonitorPilot
 
