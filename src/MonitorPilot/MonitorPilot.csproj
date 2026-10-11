@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WPF owns DPI awareness; WinForms is used only for the tray menu. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <StartupObject>MonitorPilot.Program</StartupObject>
+    <Version>1.3.0</Version>
+    <AssemblyName>MonitorPilot</AssemblyName>
+    <Description>Monitorsteuerung, Arbeitsprofile und Farbvergleich für Windows</Description>
+    <Company>MonitorPilot</Company>
+    <Product>MonitorPilot</Product>
+  </PropertyGroup>
+</Project>

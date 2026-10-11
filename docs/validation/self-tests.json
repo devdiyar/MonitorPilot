@@ -1,0 +1,195 @@
+{
+  "Passed": true,
+  "Total": 47,
+  "Failed": 0,
+  "Results": [
+    {
+      "Name": "Win32 x64 structure sizes",
+      "Passed": true
+    },
+    {
+      "Name": "Binary union snapshot survives JSON roundtrip",
+      "Passed": true
+    },
+    {
+      "Name": "Focus on secondary reanchors source and preserves Hz",
+      "Passed": true
+    },
+    {
+      "Name": "Selecting primary shifts all monitors without changing saved baseline",
+      "Passed": true
+    },
+    {
+      "Name": "Reject zero active monitors",
+      "Passed": true
+    },
+    {
+      "Name": "Reject inactive primary",
+      "Passed": true
+    },
+    {
+      "Name": "Reject missing monitor",
+      "Passed": true
+    },
+    {
+      "Name": "Hardware percent mapping respects nonzero device minimum",
+      "Passed": true
+    },
+    {
+      "Name": "Brightness draft does not alter source or other controls",
+      "Passed": true
+    },
+    {
+      "Name": "Software-only change needs no physical monitor access",
+      "Passed": true
+    },
+    {
+      "Name": "Temporary DDC read failure recovers within bounded retries",
+      "Passed": true
+    },
+    {
+      "Name": "Permanent DDC read failure stops retrying",
+      "Passed": true
+    },
+    {
+      "Name": "Readback retries a delayed monitor acknowledgement",
+      "Passed": true
+    },
+    {
+      "Name": "Readback does not endlessly retry an unavailable monitor",
+      "Passed": true
+    },
+    {
+      "Name": "Independent monitors do not block one another",
+      "Passed": true
+    },
+    {
+      "Name": "Operations on the same monitor remain serialized",
+      "Passed": true
+    },
+    {
+      "Name": "Static capabilities avoid repeated expensive device queries",
+      "Passed": true
+    },
+    {
+      "Name": "Monitor commands sharing an adapter do not interleave",
+      "Passed": true
+    },
+    {
+      "Name": "Separate adapters can progress at the same time",
+      "Passed": true
+    },
+    {
+      "Name": "Capabilities survive restart without reusing live brightness values",
+      "Passed": true
+    },
+    {
+      "Name": "Explicit capability refresh replaces stale feature data",
+      "Passed": true
+    },
+    {
+      "Name": "Expired capabilities are read from the monitor again",
+      "Passed": true
+    },
+    {
+      "Name": "Unavailable capability query is not repeated on every value read",
+      "Passed": true
+    },
+    {
+      "Name": "Overnight schedule boundaries",
+      "Passed": true
+    },
+    {
+      "Name": "Reversed shift schedule",
+      "Passed": true
+    },
+    {
+      "Name": "Reject corrupt profile data",
+      "Passed": true
+    },
+    {
+      "Name": "Reject excessive blackout and invalid hardware ranges",
+      "Passed": true
+    },
+    {
+      "Name": "Profiles retain windows, display modes and colors",
+      "Passed": true
+    },
+    {
+      "Name": "Display modes are reused without repeated driver enumeration",
+      "Passed": true
+    },
+    {
+      "Name": "Display mode results cannot mutate the cached list",
+      "Passed": true
+    },
+    {
+      "Name": "Monitor changes invalidate cached display modes",
+      "Passed": true
+    },
+    {
+      "Name": "Default global hotkeys are unique",
+      "Passed": true
+    },
+    {
+      "Name": "Live sliders deliver the last position without a backlog",
+      "Passed": true
+    },
+    {
+      "Name": "Shared adapter keeps other monitors pending until their latest value",
+      "Passed": true
+    },
+    {
+      "Name": "Live controls on different adapters progress independently",
+      "Passed": true
+    },
+    {
+      "Name": "Live queue stops failed work and accepts a later correction",
+      "Passed": true
+    },
+    {
+      "Name": "A white point preset supersedes earlier RGB drafts",
+      "Passed": true
+    },
+    {
+      "Name": "Unsupported live controls never open a monitor connection",
+      "Passed": true
+    },
+    {
+      "Name": "Incomplete settings retain custom shortcuts and recover missing actions",
+      "Passed": true
+    },
+    {
+      "Name": "Corrupt settings are backed up without preventing valid profiles from loading",
+      "Passed": true
+    },
+    {
+      "Name": "Corrupt profile collection is preserved before startup recovery",
+      "Passed": true
+    },
+    {
+      "Name": "Null profile collections receive a clear validation rejection",
+      "Passed": true
+    },
+    {
+      "Name": "Duplicate monitor identities are rejected before applying a profile",
+      "Passed": true
+    },
+    {
+      "Name": "Invalid window placement is rejected before applying a profile",
+      "Passed": true
+    },
+    {
+      "Name": "Profile hardware and dimming must belong to the saved monitors",
+      "Passed": true
+    },
+    {
+      "Name": "Invalid white points and empty hardware ranges are rejected",
+      "Passed": true
+    },
+    {
+      "Name": "Recovery launches the application when running through the dotnet host",
+      "Passed": true
+    }
+  ]
+}

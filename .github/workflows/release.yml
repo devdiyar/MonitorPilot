@@ -1,0 +1,54 @@
+name: Windows release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Match version to tag
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content src/MonitorPilot/MonitorPilot.csproj -Raw)).Project.PropertyGroup.Version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Release tag must match the project version.' }
+      - name: Build and test published executable
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Package
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $assets = @(Get-ChildItem artifacts/packages -File | ForEach-Object FullName)
+          gh release create $env:GITHUB_REF_NAME @assets --verify-tag --repo $env:GITHUB_REPOSITORY --title "MonitorPilot $env:GITHUB_REF_NAME" --notes-file docs/RELEASE-NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-tests
+          path: |
+            artifacts/qa/self-tests.json
+            artifacts/qa/live-ui.json
+          retention-days: 14

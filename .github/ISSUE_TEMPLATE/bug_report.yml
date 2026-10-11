@@ -1,0 +1,35 @@
+name: Bug or monitor compatibility report
+description: Describe a reproducible app or monitor-control problem.
+body:
+  - type: markdown
+    attributes:
+      value: Review attachments before posting. Profiles may contain window titles and display identifiers. Do not upload private data or credentials.
+  - type: input
+    id: version
+    attributes:
+      label: MonitorPilot version
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and build
+    validations:
+      required: true
+  - type: textarea
+    id: device
+    attributes:
+      label: Monitor and connection
+      description: Model, GPU/driver, HDMI/DisplayPort or dock, DDC/CI enabled, picture mode/HDR.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps, expected result, and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Optional redacted screenshot or diagnostic details

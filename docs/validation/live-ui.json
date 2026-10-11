@@ -1,0 +1,63 @@
+{
+  "Passed": true,
+  "Version": "1.3.0.0",
+  "WritesAtSimulatedBoundary": 7,
+  "Checks": [
+    {
+      "Name": "Moving color controls starts live work without disabling the page",
+      "Passed": true
+    },
+    {
+      "Name": "Color page has no manual values-apply button",
+      "Passed": true
+    },
+    {
+      "Name": "Tray opens at the pending brightness target",
+      "Passed": true
+    },
+    {
+      "Name": "Tray slider updates the color page immediately",
+      "Passed": true
+    },
+    {
+      "Name": "Tray has no manual brightness-apply button",
+      "Passed": true
+    },
+    {
+      "Name": "Live values reach hardware boundary and preserve control instances",
+      "Passed": true
+    },
+    {
+      "Name": "Tray master changes every monitor live",
+      "Passed": true
+    },
+    {
+      "Name": "Overview master changes every monitor live",
+      "Passed": true
+    },
+    {
+      "Name": "Dimming updates live using the existing overlay window",
+      "Passed": true
+    },
+    {
+      "Name": "Zero dimming removes the live overlay",
+      "Passed": true
+    },
+    {
+      "Name": "White point applies live and refreshes RGB controls",
+      "Passed": true
+    },
+    {
+      "Name": "Workspace operations wait for the final live value",
+      "Passed": true
+    },
+    {
+      "Name": "Narrow pages stack both panels without squeezing the controls",
+      "Passed": true
+    },
+    {
+      "Name": "Main window fits a small scaled work area",
+      "Passed": true
+    }
+  ]
+}

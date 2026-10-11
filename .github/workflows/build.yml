@@ -1,0 +1,48 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and test published executable
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Package with runtime notices and checksums
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hardware-independent-tests
+          path: |
+            artifacts/qa/self-tests.json
+            artifacts/qa/live-ui.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Save Windows packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MonitorPilot-win-x64
+          path: artifacts/packages/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
