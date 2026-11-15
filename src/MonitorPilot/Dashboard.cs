@@ -14,11 +14,11 @@ internal sealed partial class MainWindow
     private ScrollViewer? pageScroll;
     private void BuildShell()
     {
-        var root=new Grid();root.ColumnDefinitions.Add(new(){Width=new GridLength(210)});root.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});
+        var root=new Grid();root.ColumnDefinitions.Add(new(){Width=new GridLength(232)});root.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});
         var side=new DockPanel{Background=Theme.Sidebar};root.Children.Add(new Border{BorderBrush=Theme.Border,BorderThickness=new Thickness(0,0,1,0),Child=side});
         var logo=Theme.Icon("\uE7F4",25);logo.Foreground=Theme.Accent;
         var brand=new DockPanel{Margin=new Thickness(23,25,15,28)};logo.Margin=new Thickness(0,0,10,0);brand.Children.Add(logo);brand.Children.Add(Theme.Stack(Theme.Label("MonitorPilot",19,null,true),Theme.Label(L.T("Dein Display-Workspace"),10,Theme.Muted)));DockPanel.SetDock(brand,Dock.Top);side.Children.Add(brand);
-        var footer=Theme.Stack(Theme.Label(L.T("IM HINTERGRUND AKTIV"),10,Theme.Success,true),hotkeyStatus,Theme.Label(L.T("Version 1.4.0 · Lokal"),11,Theme.Muted),Theme.Button(L.T("Ins Tray minimieren"),Hide));footer.Margin=new Thickness(18,14,10,16);DockPanel.SetDock(footer,Dock.Bottom);side.Children.Add(footer);
+        var footer=Theme.Stack(Theme.Label(L.T("IM HINTERGRUND AKTIV"),10,Theme.Success,true),hotkeyStatus,Theme.Label(L.T("Version 1.5.0 · Lokal"),11,Theme.Muted),Theme.Button(L.T("Ins Tray minimieren"),Hide));footer.Margin=new Thickness(18,14,10,16);DockPanel.SetDock(footer,Dock.Bottom);side.Children.Add(footer);
         var links=new StackPanel{Margin=new Thickness(12,0,12,0)};
         foreach(var item in new[]{("monitors","\uE7F4",L.T("Monitore")),("colors","\uE790",L.T("Bild & Farbe")),("profiles","\uE8B7",L.T("Arbeitsprofile")),("calibrate","\uE81E",L.T("Farbvergleich")),("settings","\uE713",L.T("Einstellungen"))})
         {
@@ -41,11 +41,11 @@ internal sealed partial class MainWindow
         var row=new StackPanel{Orientation=Orientation.Horizontal};
         foreach(var option in new[]{("Light",L.T("Hell")),("Dark",L.T("Dunkel")),("System","System")})
         {
-            string mode=option.Item1;var button=Theme.Button(option.Item2,()=>SetAppearance(mode));button.Margin=new Thickness(2);button.Padding=new Thickness(12,6,12,6);button.MinHeight=30;button.BorderThickness=new Thickness(0);button.FontSize=12;
+            string mode=option.Item1;var button=Theme.Button(option.Item2,()=>SetAppearance(mode));button.Margin=new Thickness(0);button.Padding=new Thickness(12,4,12,4);button.MinHeight=29;button.BorderThickness=new Thickness(1);button.FontSize=13;
             button.ToolTip=mode=="System"?L.T("App-Design folgt der Windows-Einstellung"):L.T("App im ")+(mode=="Light"?L.T("hellen"):L.T("dunklen"))+L.T(" Design anzeigen");
             if(!appearanceButtons.TryGetValue(mode,out var list)){list=new();appearanceButtons[mode]=list;}list.Add(button);row.Children.Add(button);
         }
-        var container=new Border{Background=Theme.Hover,BorderBrush=Theme.Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(8),Padding=new Thickness(2),Child=row,HorizontalAlignment=HorizontalAlignment.Left};UpdateAppearanceButtons();return container;
+        var container=new Border{Background=Theme.Soft,CornerRadius=new CornerRadius(10),Padding=new Thickness(3),Child=row,HorizontalAlignment=HorizontalAlignment.Left};UpdateAppearanceButtons();return container;
     }
     private void SetAppearance(string mode)
     {
@@ -54,14 +54,14 @@ internal sealed partial class MainWindow
     private void ThemeChanged(){UpdateAppearanceButtons();if(loaded)BuildTrayMenu();}
     private void UpdateAppearanceButtons()
     {
-        foreach(var pair in appearanceButtons)foreach(var b in pair.Value){b.Background=pair.Key==Theme.Mode?Theme.Card:Brushes.Transparent;b.Foreground=pair.Key==Theme.Mode?Theme.Accent:Theme.Muted;b.FontWeight=pair.Key==Theme.Mode?FontWeights.SemiBold:FontWeights.Normal;}
+        foreach(var pair in appearanceButtons)foreach(var b in pair.Value){bool active=pair.Key==Theme.Mode;b.Background=active?Theme.Input:Brushes.Transparent;b.BorderBrush=active?Theme.Border:Brushes.Transparent;b.Foreground=active?Theme.Text:Theme.Muted;b.FontWeight=FontWeights.Medium;}
     }
     private void Navigate(string target){currentPage=target;Render();pageScroll?.ScrollToTop();}
     private Button ActionButton(string text,Func<Task> action,bool primary=false)=>Theme.Button(text,()=>_=c.Run(action),primary);
     private void Render()
     {
         updateHardwareControls=null;
-        foreach(var item in nav){bool selected=item.Key==currentPage;item.Value.Background=selected?Theme.Soft:Brushes.Transparent;if(item.Value.Content is StackPanel row)foreach(var element in row.Children.OfType<TextBlock>())element.Foreground=selected?Theme.Accent:Theme.Muted;}
+        foreach(var item in nav){bool selected=item.Key==currentPage;item.Value.Background=selected?Theme.Soft:Brushes.Transparent;if(item.Value.Content is StackPanel row)foreach(var element in row.Children.OfType<TextBlock>())element.Foreground=selected?Theme.Text:Theme.Muted;}
         (heading.Text,subtitle.Text)=currentPage switch{"colors"=>(L.T("Bild & Farbe"),L.T("Helligkeit und Farben für jeden Monitor fein abstimmen.")),"profiles"=>(L.T("Arbeitsprofile"),L.T("Deine Monitore und Fenster als Arbeitsplatz speichern.")),"calibrate"=>(L.T("Farbvergleich"),L.T("Unterschiede erkennen. Schritt für Schritt angleichen.")),"settings"=>(L.T("Einstellungen"),L.T("Design, Hintergrundbetrieb und Tastenkürzel.")),_=>(L.T("Monitore"),c.Monitors.Count>0?L.F($"{c.Monitors.Count(m=>m.Active)} aktiv · {c.Monitors.Count} verbunden · {c.Profiles.Count} gespeicherte Profile"):L.T("Deine Bildschirme werden erkannt …"))};
         page.Content=currentPage switch{"colors"=>ColorsPage(),"profiles"=>ProfilesPage(),"calibrate"=>CalibrationPage(),"settings"=>SettingsPage(),_=>MonitorsPage()};page.IsEnabled=!c.Busy;
     }

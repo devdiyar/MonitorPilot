@@ -68,7 +68,7 @@ internal static class Program
             try {var subset=DisplayService.Select(snapshot,new[]{m.Key},m.Key);displays.Validate(displays.Resolve(subset));focus.Add(new{Monitor=m.Name,Valid=true});}
             catch(Exception ex) {focus.Add(new{Monitor=m.Name,Valid=false,Error=ex.Message});}
         }
-        Write(path,new {Version="1.4.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=monitors,ActiveSnapshotValid=true,FocusValidation=focus,OpenWindowCount=new WindowService().Capture(monitors).Count,InteropSizes=new{Path=Marshal.SizeOf<Native.DisplayPath>(),Mode=Marshal.SizeOf<Native.DisplayMode>(),DevMode=Marshal.SizeOf<Native.DevMode>(),TargetName=Marshal.SizeOf<Native.TargetName>()}});return 0;
+        Write(path,new {Version="1.5.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=monitors,ActiveSnapshotValid=true,FocusValidation=focus,OpenWindowCount=new WindowService().Capture(monitors).Count,InteropSizes=new{Path=Marshal.SizeOf<Native.DisplayPath>(),Mode=Marshal.SizeOf<Native.DisplayMode>(),DevMode=Marshal.SizeOf<Native.DevMode>(),TargetName=Marshal.SizeOf<Native.TargetName>()}});return 0;
     }
     private static int TestDdc(string path)
     {

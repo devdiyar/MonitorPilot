@@ -7,6 +7,7 @@ Self-contained executables bundle Microsoft .NET and Windows Desktop runtime com
 - [.NET runtime license](licenses/DOTNET-LICENSE.txt)
 - [.NET runtime third-party notices](licenses/DOTNET-THIRD-PARTY-NOTICES.txt)
 - [Windows Desktop / WPF license](licenses/WPF-LICENSE.txt)
+- [Geist font (SIL Open Font License 1.1)](licenses/GEIST-OFL.txt), embedded in the app (Regular, Medium, SemiBold)
 
 The package script obtains notices from the runtime packs selected for that build, so a different SDK ships matching notices. Windows-provided APIs, fonts, and system glyphs are used from the installed OS; OS components are not copied into this source repository.
 

@@ -37,7 +37,7 @@ internal sealed class TrayQuickWindow : Window
     private void Refresh()
     {
         rebuilding=true;body.Children.Clear();brightness.Clear();var monitorList=c.Monitors.Where(m=>m.Active).ToList();
-        var focus=Theme.Button(monitorList.Count==1?L.T("Arbeitsplatz zurück"):L.T("Nur Fokusmonitor"),()=>RunAndClose(c.Focus),true);var restore=Theme.Button(L.T("Wiederherstellen"),()=>RunAndClose(c.Restore));restore.IsEnabled=c.FocusBackup!=null||System.IO.File.Exists(Store.FilePath("last-workspace.json"));body.Children.Add(Theme.Row(focus,restore));
+        var focus=Theme.Button(monitorList.Count==1?L.T("Arbeitsplatz zurück"):L.T("Nur Fokusmonitor"),()=>RunAndClose(c.Focus),true);var restore=Theme.Button(L.T("Wiederherstellen"),()=>RunAndClose(c.Restore));restore.IsEnabled=c.CanRestore;body.Children.Add(Theme.Row(focus,restore));
         body.Children.Add(Theme.Label(L.T("HELLIGKEIT"),10,Theme.Muted,true));
         double Average()=>Math.Round(monitorList.Where(m=>m.Hardware.Brightness!=null).Select(m=>(double)c.ControlPercent(m,MonitorControl.Brightness)!).DefaultIfEmpty(50).Average());
         var master=new Slider{Minimum=0,Maximum=100,Value=Average(),IsSnapToTickEnabled=true,TickFrequency=1,SmallChange=1,LargeChange=5,IsEnabled=monitorList.Any(m=>m.Hardware.Brightness!=null)};AutomationProperties.SetName(master,L.T("Alle Monitore: Helligkeit"));

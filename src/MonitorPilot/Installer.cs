@@ -13,7 +13,7 @@ internal static class Installer
     {
         try{L.SetLanguage(Store.Read<AppSettings>("settings.json")?.Language);}catch{ /* Language selection must not prevent recovery or installation. */ }
         string source=Environment.ProcessPath!,folder=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Programs","MonitorPilot"),target=Path.Combine(folder,"MonitorPilot.exe");
-        if(!silent && MessageBox.Show(L.F($"MonitorPilot 1.4.0 installieren?\n\nZiel: {folder}\n\nErstellt Startmenü- und Desktop-Verknüpfungen. Bestehende Profile bleiben erhalten. Autostart kann später in der App aktiviert werden."),L.T("MonitorPilot installieren"),MessageBoxButton.OKCancel,MessageBoxImage.Information)!=MessageBoxResult.OK)return 0;
+        if(!silent && MessageBox.Show(L.F($"MonitorPilot 1.5.0 installieren?\n\nZiel: {folder}\n\nErstellt Startmenü- und Desktop-Verknüpfungen. Bestehende Profile bleiben erhalten. Autostart kann später in der App aktiviert werden."),L.T("MonitorPilot installieren"),MessageBoxButton.OKCancel,MessageBoxImage.Information)!=MessageBoxResult.OK)return 0;
         try
         {
             // Ask the existing process to close; never kill a pending topology confirmation.
@@ -46,7 +46,7 @@ internal static class Installer
             string script=Path.Combine(folder,"Uninstall.ps1");
             File.WriteAllText(script,UninstallScript);
             using var registry=Registry.CurrentUser.CreateSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MonitorPilot");
-            registry.SetValue("DisplayName","MonitorPilot");registry.SetValue("DisplayVersion","1.4.0");registry.SetValue("Publisher","MonitorPilot");registry.SetValue("InstallLocation",folder);registry.SetValue("DisplayIcon",target);registry.SetValue("EstimatedSize",(int)(new FileInfo(target).Length/1024),RegistryValueKind.DWord);
+            registry.SetValue("DisplayName","MonitorPilot");registry.SetValue("DisplayVersion","1.5.0");registry.SetValue("Publisher","MonitorPilot");registry.SetValue("InstallLocation",folder);registry.SetValue("DisplayIcon",target);registry.SetValue("EstimatedSize",(int)(new FileInfo(target).Length/1024),RegistryValueKind.DWord);
             registry.SetValue("UninstallString","powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \""+script+"\"");registry.SetValue("NoModify",1);registry.SetValue("NoRepair",1);
             Store.Log("Installed to "+target);
             if(!silent) {MessageBox.Show(L.T("MonitorPilot ist installiert. Die App wird jetzt geöffnet.\n\nProfile und Tastenkürzel findest du direkt in der App."),L.T("Installation abgeschlossen"),MessageBoxButton.OK,MessageBoxImage.Information);Process.Start(new ProcessStartInfo(target){UseShellExecute=true});}

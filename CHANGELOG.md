@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 — 2026-11-15
+
+- Fix: "Restore workspace" could leave you stuck on the focus display. Every display change overwrote the saved workspace with the current state, so after one restore the backup was the single-display focus layout and later restores re-applied it ("Vor Vor Vor Fokusmodus").
+- The saved workspace is now only replaced by a layout with at least as many displays, or when the old one is no longer connectable. Restore picks the first backup that brings displays back; without one it extends all connected displays.
+- The focus backup is cleared once the layout is back, even if some DDC/CI values cannot be written. Snapshot names no longer grow with repeated restores.
+- New look based on the shadcn/ui design system: neutral light/dark tokens, Geist font, outline/default buttons, select, checkbox, slider, tabs, badges and tooltips.
+- 56 self-tests, including restore target selection.
+
 ## 1.4.0 — 2026-10-11
 
 - Full English app interface alongside German: all pages, tray controls and menus, dialogs, recovery prompts, shortcut labels, statuses, and app-generated errors.

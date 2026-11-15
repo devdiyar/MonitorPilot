@@ -165,7 +165,7 @@ internal sealed class AppController
     }
     private async Task<bool> Switch(WorkspaceSnapshot before,Func<Task> action)
     {
-        Store.Save("last-workspace.json",before);
+        RememberWorkspace(before);
         using var guard=new RecoveryGuard();
         await guard.Arm(before);
         try
@@ -216,17 +216,48 @@ internal sealed class AppController
         if(snapshot==null) {var path=Store.FilePath("focus-workspace.json");if(File.Exists(path))File.Delete(path);}
         else Store.Save("focus-workspace.json",snapshot);
     }
+    // The restore target must never be replaced by the reduced focus layout; otherwise a later restore
+    // re-applies a single display and the user is stuck in focus mode.
+    private void RememberWorkspace(WorkspaceSnapshot before)
+    {
+        WorkspaceSnapshot? saved=null;
+        try{saved=Store.Read<WorkspaceSnapshot>("last-workspace.json");}catch{}
+        if(saved==null||before.Topology.Identities.Count>=saved.Topology.Identities.Count||!Restorable(saved))Store.Save("last-workspace.json",before);
+    }
+    private bool Restorable(WorkspaceSnapshot snapshot)
+    {
+        try{Store.Validate(snapshot);Displays.Validate(Displays.Resolve(snapshot.Topology));return true;}
+        catch{return false;}
+    }
+    // A target is useful when it brings back displays, or re-arranges an already complete layout.
+    internal static bool ShouldRestore(int savedDisplays,int activeDisplays,int connectedDisplays)
+        =>savedDisplays>activeDisplays||(savedDisplays==activeDisplays&&activeDisplays>=connectedDisplays);
+    private WorkspaceSnapshot? RestoreTarget()
+    {
+        int active=Monitors.Count(m=>m.Active),connected=Monitors.Count;
+        WorkspaceSnapshot? last=null;
+        try{last=Store.Read<WorkspaceSnapshot>("last-workspace.json");}catch{}
+        foreach(var candidate in new[]{FocusBackup,last})
+            if(candidate!=null&&ShouldRestore(candidate.Topology.Identities.Count,active,connected)&&Restorable(candidate))return candidate;
+        return null;
+    }
+    public bool CanRestore=>FocusBackup!=null||File.Exists(Store.FilePath("last-workspace.json"))||Monitors.Any(m=>!m.Active);
     public async Task Restore()
     {
-        var saved=FocusBackup??Store.Read<WorkspaceSnapshot>("last-workspace.json");
-        if(saved==null) throw new InvalidOperationException(L.T("Noch keine Arbeitsplatzsicherung vorhanden. Zum ersten Aktivieren bitte „Alle erweitern“ verwenden."));
-        bool restored=await ApplyWorkspace(saved);
-        if(restored) SetFocusBackup(null);
+        var saved=RestoreTarget();
+        if(saved==null)
+        {
+            if(Monitors.Any(m=>!m.Active)){Store.Log("No usable workspace backup; extending all displays.");await Extend();if(Monitors.All(m=>m.Active))SetFocusBackup(null);return;}
+            throw new InvalidOperationException(L.T("Noch keine Arbeitsplatzsicherung vorhanden. Zum ersten Aktivieren bitte „Alle erweitern“ verwenden."));
+        }
+        // Clear the focus backup as soon as the layout is back; failing DDC/CI values must not pin an old backup.
+        await ApplyWorkspace(saved,()=>SetFocusBackup(null));
     }
-    public async Task<bool> ApplyWorkspace(WorkspaceSnapshot saved)
+    public Task<bool> ApplyWorkspace(WorkspaceSnapshot saved)=>ApplyWorkspace(saved,null);
+    private async Task<bool> ApplyWorkspace(WorkspaceSnapshot saved,Action? layoutKept)
     {
         Store.Validate(saved);Displays.Validate(Displays.Resolve(saved.Topology));
-        var before=await Capture(L.T("Vor ")+saved.Name);
+        var before=await Capture(L.T("Vor ")+BaseName(saved.Name));
         (int Restored,int Skipped) windowResult=(0,0);
         bool keep=await Switch(before,async()=>
         {
@@ -235,6 +266,7 @@ internal sealed class AppController
         });
         await Refresh();
         if(!keep) return false;
+        layoutKept?.Invoke();
         var results=await Task.WhenAll(Monitors.Where(m=>m.Active&&saved.Hardware.ContainsKey(m.Key)).Select(async m=>
         {
             try {await Task.Run(()=>Hardware.Apply(m,saved.Hardware[m.Key]));return (string?)null;}
@@ -244,6 +276,12 @@ internal sealed class AppController
         Overlays.Restore(saved.Dimming,Monitors);
         Report(L.F($"{saved.Name} wiederhergestellt · {windowResult.Restored} Fenster zugeordnet")+(windowResult.Skipped>0?L.F($" · {windowResult.Skipped} inzwischen geschlossen/nicht erreichbar"):"")+(failures.Count>0?L.T(". Monitorwerte teilweise offen: ")+string.Join("; ",failures):L.T(". Auflösung, Anordnung und Monitorwerte geladen.")),failures.Count>0);
         return failures.Count==0;
+    }
+    internal static string BaseName(string name)
+    {
+        foreach(var prefix in new[]{L.T("Vor "),"Vor ","Before "})
+            while(name.Length>prefix.Length&&name.StartsWith(prefix,StringComparison.Ordinal))name=name[prefix.Length..];
+        return name;
     }
     public async Task SelectMonitors(List<string> keys,string primary)
     {

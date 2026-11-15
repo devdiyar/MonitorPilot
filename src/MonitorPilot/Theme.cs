@@ -29,14 +29,15 @@ internal static class Theme
     {
         var brush=new SolidColorBrush();BindingOperations.SetBinding(brush,SolidColorBrush.ColorProperty,new Binding("["+name+"]"){Source=colors,Mode=BindingMode.OneWay});return brush;
     }
-    public static readonly SolidColorBrush Background=Live("Background"),Sidebar=Live("Sidebar"),Card=Live("Card"),Border=Live("Border"),Text=Live("Text"),Muted=Live("Muted"),Accent=Live("Accent"),Blue=Live("Accent"),AccentText=Live("AccentText"),Soft=Live("Soft"),Hover=Live("Hover"),Input=Live("Input"),Track=Live("Track"),Success=Live("Success"),Danger=Live("Danger"),Map=Live("Map");
+    public static readonly SolidColorBrush Background=Live("Background"),Sidebar=Live("Sidebar"),Card=Live("Card"),Border=Live("Border"),Text=Live("Text"),Muted=Live("Muted"),Accent=Live("Accent"),Blue=Live("Accent"),AccentText=Live("AccentText"),Soft=Live("Soft"),Hover=Live("Hover"),Input=Live("Input"),Track=Live("Track"),Success=Live("Success"),Danger=Live("Danger"),Map=Live("Map"),Ring=Live("Ring");
     public static string Mode {get;private set;}="System";
     public static bool IsDark {get;private set;}
     public static event Action? Changed;
     public static void Install(System.Windows.Application app)
     {
         SetMode("System");
-        foreach(var item in new (string Name,Brush Brush)[]{("Background",Background),("Sidebar",Sidebar),("Card",Card),("Border",Border),("Text",Text),("Muted",Muted),("Accent",Accent),("AccentText",AccentText),("Soft",Soft),("Hover",Hover),("Input",Input),("Track",Track),("Success",Success),("Danger",Danger),("Map",Map)})app.Resources["MP."+item.Name]=item.Brush;
+        foreach(var item in new (string Name,Brush Brush)[]{("Background",Background),("Sidebar",Sidebar),("Card",Card),("Border",Border),("Text",Text),("Muted",Muted),("Accent",Accent),("AccentText",AccentText),("Soft",Soft),("Hover",Hover),("Input",Input),("Track",Track),("Success",Success),("Danger",Danger),("Map",Map),("Ring",Ring)})app.Resources["MP."+item.Name]=item.Brush;
+        app.Resources["MP.Font"]=Font;
         app.Resources.MergedDictionaries.Add(new ResourceDictionary{Source=new Uri("/MonitorPilot;component/UI/Controls.xaml",UriKind.Relative)});
         SystemEvents.UserPreferenceChanged+=(_,_)=>app.Dispatcher.BeginInvoke(()=>{if(Mode=="System")SetMode("System");});
     }
@@ -49,19 +50,21 @@ internal static class Theme
     {
         try{using var key=Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");return key?.GetValue("AppsUseLightTheme") is int value&&value==0;}catch{return false;}
     }
+    // shadcn/ui "neutral" tokens: Accent = primary, Soft/Hover = accent, Track = input, Ring = ring.
     internal static Dictionary<string,string> Palette(bool dark)=>dark?new()
     {
-        ["Background"]="#101318",["Sidebar"]="#151A22",["Card"]="#1A202A",["Border"]="#333E4E",["Text"]="#EDF2FA",["Muted"]="#A8B6C9",["Accent"]="#83ADFF",["AccentText"]="#101C33",["Soft"]="#243653",["Hover"]="#293241",["Input"]="#131923",["Track"]="#52627A",["Success"]="#6AD6AE",["Danger"]="#FFB3AF",["Map"]="#141A23"
+        ["Background"]="#0A0A0A",["Sidebar"]="#171717",["Card"]="#171717",["Border"]="#2E2E2E",["Text"]="#FAFAFA",["Muted"]="#A1A1A1",["Accent"]="#E5E5E5",["AccentText"]="#171717",["Soft"]="#262626",["Hover"]="#262626",["Input"]="#1F1F1F",["Track"]="#3A3A3A",["Ring"]="#737373",["Success"]="#4ADE80",["Danger"]="#FF6467",["Map"]="#0F0F0F"
     }:new()
     {
-        ["Background"]="#F3F5F9",["Sidebar"]="#F9FAFC",["Card"]="#FFFFFF",["Border"]="#D8DFE9",["Text"]="#182237",["Muted"]="#57677D",["Accent"]="#245BC4",["AccentText"]="#FFFFFF",["Soft"]="#E8EFFD",["Hover"]="#EDF1F7",["Input"]="#FFFFFF",["Track"]="#8292A8",["Success"]="#197353",["Danger"]="#AE2624",["Map"]="#F5F7FB"
+        ["Background"]="#FFFFFF",["Sidebar"]="#FAFAFA",["Card"]="#FFFFFF",["Border"]="#E5E5E5",["Text"]="#0A0A0A",["Muted"]="#737373",["Accent"]="#171717",["AccentText"]="#FAFAFA",["Soft"]="#F5F5F5",["Hover"]="#F5F5F5",["Input"]="#FFFFFF",["Track"]="#E5E5E5",["Ring"]="#A1A1A1",["Success"]="#16A34A",["Danger"]="#DC2626",["Map"]="#FAFAFA"
     };
+    public static readonly FontFamily Font=new(new Uri("pack://application:,,,/MonitorPilot;component/"),"./Fonts/#Geist, Segoe UI Variable Text, Segoe UI");
     public static TextBlock Label(string text,double size=14,Brush? color=null,bool bold=false)=>new(){Text=text,FontSize=size,Foreground=color??Text,FontWeight=bold?FontWeights.SemiBold:FontWeights.Normal,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,6),LineHeight=size*1.45};
     public static Button Button(string text,Action click,bool primary=false)
     {
         var button=new Button{Content=text};if(primary)button.Style=(Style)System.Windows.Application.Current.FindResource("PrimaryButton");button.Click+=(_,_)=>click();System.Windows.Automation.AutomationProperties.SetName(button,text);return button;
     }
-    public static Border Panel(UIElement content,Thickness? margin=null)=>new(){Background=Card,BorderBrush=Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(10),Padding=new Thickness(20),Margin=margin??new Thickness(0,0,0,16),Child=content};
+    public static Border Panel(UIElement content,Thickness? margin=null)=>new(){Background=Card,BorderBrush=Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(12),Padding=new Thickness(20),Margin=margin??new Thickness(0,0,0,16),Child=content};
     public static StackPanel Stack(params UIElement[] children){var panel=new StackPanel();foreach(var child in children)panel.Children.Add(child);return panel;}
     public static WrapPanel Row(params UIElement[] children){var panel=new WrapPanel();foreach(var child in children)panel.Children.Add(child);return panel;}
     public static Grid Columns(UIElement left,UIElement right,double rightWidth=300)
@@ -98,11 +101,12 @@ internal static class Theme
         window.Width=Math.Min(width,Math.Max(320,area.Width-24));window.Height=Math.Min(height,Math.Max(240,area.Height-24));
         window.MinWidth=Math.Min(860,window.Width);window.MinHeight=Math.Min(560,window.Height);
     }
-    public static Border Badge(string text,bool accent=false)=>new(){Background=accent?Soft:Hover,CornerRadius=new CornerRadius(5),Padding=new Thickness(9,4,9,4),Margin=new Thickness(0,0,8,0),VerticalAlignment=VerticalAlignment.Center,Child=new TextBlock{Text=text,FontSize=11,Foreground=accent?Accent:Muted,FontWeight=FontWeights.SemiBold}};
+    // shadcn Badge: "secondary" for highlighted facts, "outline" otherwise.
+    public static Border Badge(string text,bool accent=false)=>new(){Background=accent?Soft:Brushes.Transparent,BorderBrush=accent?Soft:Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(6),Padding=new Thickness(8,2,8,3),Margin=new Thickness(0,0,8,0),VerticalAlignment=VerticalAlignment.Center,Child=new TextBlock{Text=text,FontSize=12,Foreground=Text,FontWeight=FontWeights.Medium}};
     public static TextBlock Icon(string glyph,double size=18)=>new(){Text=glyph,FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=size,VerticalAlignment=VerticalAlignment.Center,Foreground=Muted};
     public static void Decorate(Window window)
     {
-        window.Background=Background;window.Foreground=Text;window.FontFamily=new FontFamily("Segoe UI Variable Text, Segoe UI");window.FontSize=14;window.UseLayoutRounding=true;window.SnapsToDevicePixels=true;window.SourceInitialized+=(_,_)=>UpdateTitleBar(window);
+        window.Background=Background;window.Foreground=Text;window.FontFamily=Font;window.FontSize=14;window.UseLayoutRounding=true;window.SnapsToDevicePixels=true;window.SourceInitialized+=(_,_)=>UpdateTitleBar(window);
     }
     private static void UpdateTitleBar(Window window)
     {

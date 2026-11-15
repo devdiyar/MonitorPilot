@@ -129,7 +129,7 @@ internal sealed partial class MainWindow : Window
     private void ExportDiagnostics()
     {
         var dialog=new SaveFileDialog {Filter="JSON (*.json)|*.json",FileName=L.T("MonitorPilot-Diagnose.json")};if(dialog.ShowDialog(this)!=true)return;
-        try{File.WriteAllText(dialog.FileName,JsonSerializer.Serialize(new{Version="1.4.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=c.Monitors,Hotkeys=c.Settings.Hotkeys,HasFocusBackup=c.FocusBackup!=null},Store.Json));c.Report(L.T("Diagnose exportiert. Sie enthält Monitoridentitäten, aber keine Fensterinhalte."));}catch(Exception ex){c.Report(ex.Message,true);}
+        try{File.WriteAllText(dialog.FileName,JsonSerializer.Serialize(new{Version="1.5.0",Captured=DateTimeOffset.Now,OS=Environment.OSVersion.ToString(),Monitors=c.Monitors,Hotkeys=c.Settings.Hotkeys,HasFocusBackup=c.FocusBackup!=null},Store.Json));c.Report(L.T("Diagnose exportiert. Sie enthält Monitoridentitäten, aber keine Fensterinhalte."));}catch(Exception ex){c.Report(ex.Message,true);}
     }
     public void ShowApp() {Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();Native.SetForegroundWindow(new WindowInteropHelper(this).Handle);Store.Log("Main window opened.");}
     public void RestoreFromOutside() {ShowApp();_=c.Run(c.Restore);}

@@ -13,7 +13,7 @@ internal sealed class TrayColors : ProfessionalColorTable
     public override Color ImageMarginGradientMiddle=>Card;
     public override Color ImageMarginGradientEnd=>Card;
     public override Color MenuItemSelected=>Convert(Theme.Soft);
-    public override Color MenuItemBorder=>Convert(Theme.Accent);
+    public override Color MenuItemBorder=>Convert(Theme.Soft);
     public override Color MenuBorder=>Convert(Theme.Border);
     public override Color SeparatorDark=>Convert(Theme.Border);
     public override Color SeparatorLight=>Card;

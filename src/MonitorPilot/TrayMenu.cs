@@ -37,7 +37,7 @@ internal sealed partial class MainWindow
         Item(menu.Items,"MonitorPilot · "+c.Monitors.Count(m=>m.Active)+L.T(" aktive Monitore"),enabled:false);
         Item(menu.Items,L.T("Schnellsteuerung …"),ShowTrayPanel);Item(menu.Items,L.T("Hauptfenster öffnen"),ShowApp).ShortcutKeyDisplayString=Shortcut("show");menu.Items.Add(new Forms.ToolStripSeparator());
         Item(menu.Items,c.Monitors.Count(m=>m.Active)==1?L.T("Arbeitsplatz wiederherstellen"):L.T("Nur Fokusmonitor verwenden"),Run(c.Focus),!c.Busy).ShortcutKeyDisplayString=Shortcut("focus");
-        Item(menu.Items,L.T("Gesicherten Arbeitsplatz laden"),Run(c.Restore),!c.Busy&&(c.FocusBackup!=null||File.Exists(Store.FilePath("last-workspace.json")))).ShortcutKeyDisplayString=Shortcut("restore");
+        Item(menu.Items,L.T("Gesicherten Arbeitsplatz laden"),Run(c.Restore),!c.Busy&&c.CanRestore).ShortcutKeyDisplayString=Shortcut("restore");
         Item(menu.Items,L.T("Alle Monitore erweitern"),Run(c.Extend),!c.Busy);
         var profiles=Item(menu.Items,L.T("Arbeitsprofile"),enabled:!c.Busy);
         foreach(var profile in c.Profiles)Item(profiles.DropDownItems,profile.Workspace.Name,Run(async()=>{await c.ApplyWorkspace(profile.Workspace);}));
