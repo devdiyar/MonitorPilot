@@ -60,13 +60,23 @@ internal static class Theme
     };
     public static readonly FontFamily Font=new(new Uri("pack://application:,,,/MonitorPilot;component/"),"./Fonts/#Geist, Segoe UI Variable Text, Segoe UI");
     public static TextBlock Label(string text,double size=14,Brush? color=null,bool bold=false)=>new(){Text=text,FontSize=size,Foreground=color??Text,FontWeight=bold?FontWeights.SemiBold:FontWeights.Normal,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,6),LineHeight=size*1.45};
-    public static Button Button(string text,Action click,bool primary=false)
+    public static Button Button(string text,Action click,bool primary=false,string? style=null)
     {
-        var button=new Button{Content=text};if(primary)button.Style=(Style)System.Windows.Application.Current.FindResource("PrimaryButton");button.Click+=(_,_)=>click();System.Windows.Automation.AutomationProperties.SetName(button,text);return button;
+        var button=new Button{Content=text};style??=primary?"PrimaryButton":null;if(style!=null)button.Style=(Style)System.Windows.Application.Current.FindResource(style);button.Click+=(_,_)=>click();System.Windows.Automation.AutomationProperties.SetName(button,text);return button;
     }
     public static Border Panel(UIElement content,Thickness? margin=null)=>new(){Background=Card,BorderBrush=Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(12),Padding=new Thickness(20),Margin=margin??new Thickness(0,0,0,16),Child=content};
     public static StackPanel Stack(params UIElement[] children){var panel=new StackPanel();foreach(var child in children)panel.Children.Add(child);return panel;}
-    public static WrapPanel Row(params UIElement[] children){var panel=new WrapPanel();foreach(var child in children)panel.Children.Add(child);return panel;}
+    // Controls carry no right margin of their own, so stretched ones line up; rows add the 8 px gap and centre vertically.
+    public static WrapPanel Row(params UIElement[] children)
+    {
+        var panel=new WrapPanel();
+        foreach(var child in children)
+        {
+            if(child is FrameworkElement element){if(element.Margin.Right==0&&child!=children[^1])element.Margin=new Thickness(element.Margin.Left,element.Margin.Top,8,element.Margin.Bottom);element.VerticalAlignment=VerticalAlignment.Center;}
+            panel.Children.Add(child);
+        }
+        return panel;
+    }
     public static Grid Columns(UIElement left,UIElement right,double rightWidth=300)
         =>new AdaptiveColumns(left,right,rightWidth);
     private sealed class AdaptiveColumns : Grid
@@ -102,7 +112,7 @@ internal static class Theme
         window.MinWidth=Math.Min(860,window.Width);window.MinHeight=Math.Min(560,window.Height);
     }
     // shadcn Badge: "secondary" for highlighted facts, "outline" otherwise.
-    public static Border Badge(string text,bool accent=false)=>new(){Background=accent?Soft:Brushes.Transparent,BorderBrush=accent?Soft:Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(6),Padding=new Thickness(8,2,8,3),Margin=new Thickness(0,0,8,0),VerticalAlignment=VerticalAlignment.Center,Child=new TextBlock{Text=text,FontSize=12,Foreground=Text,FontWeight=FontWeights.Medium}};
+    public static Border Badge(string text,bool accent=false)=>new(){Background=accent?Soft:Brushes.Transparent,BorderBrush=accent?Soft:Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(6),Padding=new Thickness(8,2,8,3),Margin=new Thickness(0,0,8,0),VerticalAlignment=VerticalAlignment.Center,HorizontalAlignment=HorizontalAlignment.Left,Child=new TextBlock{Text=text,FontSize=12,Foreground=Text,FontWeight=FontWeights.Medium}};
     public static TextBlock Icon(string glyph,double size=18)=>new(){Text=glyph,FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=size,VerticalAlignment=VerticalAlignment.Center,Foreground=Muted};
     public static void Decorate(Window window)
     {

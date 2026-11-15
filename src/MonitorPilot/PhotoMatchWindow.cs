@@ -74,7 +74,7 @@ internal sealed class PhotoMatchWindow : Window
         var left=new DockPanel();DockPanel.SetDock(prompt,Dock.Top);left.Children.Add(prompt);left.Children.Add(new Border{Background=Theme.Map,BorderBrush=Theme.Border,BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(12),Padding=new Thickness(10),Child=stage});
         root.Children.Add(left);
         var urls=server.Running?string.Join(Environment.NewLine,server.Urls):L.T("Upload-Seite konnte nicht starten. Foto per Datei oder Zwischenablage laden.");
-        var urlBox=new TextBox{Text=urls,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,FontSize=13,Margin=new Thickness(0,4,0,6)};
+        var urlBox=new TextBox{Text=urls,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,FontSize=13,Padding=new Thickness(10,8,10,8),Margin=new Thickness(0,4,0,10)};
         var start=Theme.Button(L.T("Start: Testbild zeigen"),ShowPatches,true);start.HorizontalAlignment=HorizontalAlignment.Stretch;start.MinHeight=44;start.Margin=new Thickness(0,4,0,10);
         var more=Theme.Stack(
             Theme.Label(L.T("Referenzmonitor"),12,null,true),reference,hintRow,colors,autoApply,

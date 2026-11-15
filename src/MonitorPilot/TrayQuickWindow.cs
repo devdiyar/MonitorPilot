@@ -38,10 +38,10 @@ internal sealed class TrayQuickWindow : Window
     {
         rebuilding=true;body.Children.Clear();brightness.Clear();var monitorList=c.Monitors.Where(m=>m.Active).ToList();
         var focus=Theme.Button(monitorList.Count==1?L.T("Arbeitsplatz zurück"):L.T("Nur Fokusmonitor"),()=>RunAndClose(c.Focus),true);var restore=Theme.Button(L.T("Wiederherstellen"),()=>RunAndClose(c.Restore));restore.IsEnabled=c.CanRestore;body.Children.Add(Theme.Row(focus,restore));
-        body.Children.Add(Theme.Label(L.T("HELLIGKEIT"),10,Theme.Muted,true));
+        var section=Theme.Label(L.T("HELLIGKEIT"),10,Theme.Muted,true);section.Margin=new Thickness(0,8,0,6);body.Children.Add(section);
         double Average()=>c.SharedBrightness();
         var master=new Slider{Minimum=0,Maximum=100,Value=Average(),IsSnapToTickEnabled=true,TickFrequency=1,SmallChange=1,LargeChange=5,IsEnabled=monitorList.Any(m=>m.Hardware.Brightness!=null)};AutomationProperties.SetName(master,L.T("Alle Monitore: Helligkeit"));
-        var masterLabel=Theme.Label(c.MatchReference!=null?L.T("Alle gemeinsam · angeglichen"):L.T("Alle gemeinsam"),12,Theme.Accent,true);body.Children.Add(Theme.Stack(masterLabel,master,new Border{Height=1,Background=Theme.Border,Margin=new Thickness(0,10,0,10)}));
+        var masterLabel=Theme.Label(c.MatchReference!=null?L.F($"Alle gemeinsam · angeglichen · {master.Value:0} %"):L.F($"Alle gemeinsam · {master.Value:0} %"),12,Theme.Accent,true);body.Children.Add(Theme.Stack(masterLabel,master,new Border{Height=1,Background=Theme.Border,Margin=new Thickness(0,10,0,10)}));
         var updates=new List<Action>();
         foreach(var m in monitorList)
         {
@@ -62,7 +62,10 @@ internal sealed class TrayQuickWindow : Window
         {
             body.Children.Add(new Border{Height=1,Background=Theme.Border,Margin=new Thickness(0,8,0,12)});var profiles=new ComboBox{ItemsSource=c.Profiles,SelectedIndex=0,Margin=new Thickness(0,3,0,8)};AutomationProperties.SetName(profiles,L.T("Arbeitsprofil auswählen"));body.Children.Add(Theme.Label(L.T("Arbeitsprofil"),12,null,true));body.Children.Add(profiles);body.Children.Add(Theme.Button(L.T("Profil anwenden"),()=>{if(profiles.SelectedItem is ProfileEntry p)RunAndClose(async()=>{await c.ApplyWorkspace(p.Workspace);});}));
         }
-        body.Children.Add(Theme.Row(Theme.Button(L.T("Bild & Farbe"),()=>{Close();openColors();}),Theme.Button(L.T("Tray-Menü …"),()=>openMenu()),Theme.Button(L.T("Einstellungen"),()=>{Close();openSettings();})));body.Children.Add(Theme.Label(L.T("Rechtsklick auf das Tray-Symbol: weitere Einstellungen."),10,Theme.Muted));rebuilding=false;UpdateStatus();
+        // Three equal columns never wrap, however narrow the tray panel gets.
+        var links=new System.Windows.Controls.Primitives.UniformGrid{Columns=3,Margin=new Thickness(0,4,0,0)};
+        foreach(var link in new[]{Theme.Button(L.T("Bild & Farbe"),()=>{Close();openColors();}),Theme.Button(L.T("Tray-Menü …"),()=>openMenu()),Theme.Button(L.T("Einstellungen"),()=>{Close();openSettings();})}){link.Padding=new Thickness(6,7,6,7);link.Margin=new Thickness(0,0,6,8);links.Children.Add(link);}
+        body.Children.Add(links);body.Children.Add(Theme.Label(L.T("Rechtsklick auf das Tray-Symbol: weitere Einstellungen."),10,Theme.Muted));rebuilding=false;UpdateStatus();
         updateHardware=()=>{rebuilding=true;try{foreach(var update in updates)update();master.IsEnabled=monitorList.Any(m=>m.Hardware.Brightness!=null);master.Value=Average();masterLabel.Text=c.MatchReference!=null?L.F($"Alle gemeinsam · angeglichen · {master.Value:0} %"):L.F($"Alle gemeinsam · {master.Value:0} %");}finally{rebuilding=false;}};
     }
     private void RunAndClose(Func<Task> operation){Close();_=c.Run(operation);}

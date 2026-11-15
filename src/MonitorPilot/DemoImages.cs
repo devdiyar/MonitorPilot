@@ -33,7 +33,7 @@ internal static class DemoImages
             foreach(var m in monitors)DisplayService.ModesFor(m.DeviceName,()=>new(){new(){Width=(uint)m.Width,Height=(uint)m.Height,Frequency=(uint)m.Hz},new(){Width=(uint)m.Width,Height=(uint)m.Height,Frequency=60}});
             typeof(AppController).GetProperty(nameof(AppController.Monitors))!.SetValue(controller,monitors);
             controller.Profiles.Add(new(){Workspace=new(){Name="Studio · alle fünf Displays",Topology=new(){Identities=monitors.Select(m=>new PathIdentity{Key=m.Key,Name=m.Name}).ToList()},CapturedAt=new DateTimeOffset(2026,10,11,10,0,0,TimeSpan.Zero)}});
-            controller.Report(L.T("●  Bereit · Beispieldaten für die Dokumentation"));
+            controller.Report(L.T("Bereit · Beispieldaten für die Dokumentation"));
             var flags=BindingFlags.Instance|BindingFlags.NonPublic;
             void Page(string page,string mode,string file)
             {
@@ -46,7 +46,7 @@ internal static class DemoImages
             Render((FrameworkElement)quick.Content,430,830,Path.Combine(directory,"tray-controls.png"));quick.Close();
             typeof(MainWindow).GetMethod("SetLanguage",flags)!.Invoke(window,new object[]{"en"});
             var englishNames=new[]{"Primary display","Studio left","Studio right","Portrait","Reference"};for(int i=0;i<monitors.Count;i++)monitors[i].Name=englishNames[i];
-            controller.Profiles[0].Workspace.Name="Studio · All five displays";controller.Report(L.T("●  Bereit · Beispieldaten für die Dokumentation"));
+            controller.Profiles[0].Workspace.Name="Studio · All five displays";controller.Report(L.T("Bereit · Beispieldaten für die Dokumentation"));
             Page("monitors","Dark","overview-dark-en.png");Page("monitors","Light","overview-light-en.png");Page("colors","Dark","color-controls-en.png");Page("settings","Light","language-settings-en.png");
             Theme.SetMode("Light");quick=new TrayQuickWindow(controller,()=>{},()=>{},()=>{});Render((FrameworkElement)quick.Content,430,830,Path.Combine(directory,"tray-controls-en.png"));quick.Close();
             return 0;
