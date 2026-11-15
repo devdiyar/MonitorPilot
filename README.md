@@ -48,6 +48,7 @@ Target: Windows 10/11 **x64**. Windows 11 with five physical monitors is the tes
 | **Focus mode** | Save the workspace, optionally collect open windows, and deactivate the extra displays in Windows. |
 | **Workspace restore** | Restore display configuration, still-open windows, readable monitor controls, and software dimming. |
 | **Display configuration** | Active displays, main/focus display, desktop positions, resolution, refresh rate, and rotation. |
+| **Monitor map** | Every display tile shows its diagonal (from EDID), resolution, refresh rate, Windows scaling, orientation, HDR, and live brightness. |
 | **Return protection** | An independent process restores the previous layout and open-window positions if a display change is not confirmed within about 30 seconds. |
 | **Picture comparison** | Shared grayscale, color patches, and full-color test images, plus shortcuts to Windows color tools. |
 | **Software dimming** | A live, click-through black overlay per display, from 0 to 80%; useful when hardware brightness is unavailable. |

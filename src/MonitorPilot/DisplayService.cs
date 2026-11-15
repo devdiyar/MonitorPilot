@@ -72,7 +72,9 @@ internal sealed class DisplayService
                 m.Handle=h.Handle; m.Primary=(h.Info.Flags & 1)!=0;
                 // CCD source dimensions are pre-rotation; the desktop rectangle is authoritative for maps/overlays.
                 m.X=h.Info.Monitor.Left;m.Y=h.Info.Monitor.Top;m.Width=h.Info.Monitor.Width;m.Height=h.Info.Monitor.Height;
+                if(Native.GetDpiForMonitor(h.Handle,0,out uint dpi,out _)==0&&dpi>0)m.ScalePercent=(int)Math.Round(dpi*100/96.0);
             }
+            (m.WidthMm,m.HeightMm)=PhysicalSize(name.DevicePath);
             var color=new Native.ColorInfo {Header=new() { Type=9,Size=(uint)Marshal.SizeOf<Native.ColorInfo>(),Adapter=p.Target.Adapter,Id=p.Target.Id }};
             if(enabled && Native.GetColorInfo(ref color)==0) { m.Hdr=(color.Flags & 2)!=0; m.Bits=color.Bits; }
             list.Add(m);
@@ -104,6 +106,24 @@ internal sealed class DisplayService
             old[i]=path;
         }
         return new() { Paths=Pack(old),Modes=Pack(modes),Identities=Store.Clone(snapshot.Identities) };
+    }
+    // A device path like DISPLAY#AOC3202#5&...#{guid} maps to HKLM\...\Enum\DISPLAY\AOC3202\5&...; EDID bytes 66-68 hold the image size in mm.
+    internal static (int Width,int Height) PhysicalSize(string devicePath)
+    {
+        try
+        {
+            var parts=devicePath.Split('#');if(parts.Length<3)return (0,0);
+            using var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\DISPLAY\{parts[1]}\{parts[2]}\Device Parameters");
+            return key?.GetValue("EDID") is byte[] edid?EdidSize(edid):(0,0);
+        }
+        catch{return (0,0);}
+    }
+    internal static (int Width,int Height) EdidSize(byte[] edid)
+    {
+        if(edid.Length<128)return (0,0);
+        int w=edid[66]|((edid[68]&0xF0)<<4),h=edid[67]|((edid[68]&0x0F)<<8);
+        if(w>0&&h>0)return (w,h);
+        return edid[21]>0&&edid[22]>0?(edid[21]*10,edid[22]*10):(0,0);
     }
     private static string SourceKey(Native.DisplayPath p)=>$"{p.Source.Adapter.High}:{p.Source.Adapter.Low}:{p.Source.Id}";
     public static TopologySnapshot Select(TopologySnapshot snapshot,IEnumerable<string> selected,string primary)

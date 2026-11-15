@@ -6,7 +6,8 @@
 - The saved workspace is now only replaced by a layout with at least as many displays, or when the old one is no longer connectable. Restore picks the first backup that brings displays back; without one it extends all connected displays.
 - The focus backup is cleared once the layout is back, even if some DDC/CI values cannot be written. Snapshot names no longer grow with repeated restores.
 - New look based on the shadcn/ui design system: neutral light/dark tokens, Geist font, outline/default buttons, select, checkbox, slider, tabs, badges and tooltips.
-- 56 self-tests, including restore target selection.
+- Monitor map tiles show the panel diagonal (read from EDID), resolution, refresh rate, Windows scaling, orientation, HDR and live brightness; narrow tiles list one fact per line. The monitor list shows the diagonal too.
+- 57 self-tests, including restore target selection and EDID size parsing.
 
 ## 1.4.0 — 2026-10-11
 

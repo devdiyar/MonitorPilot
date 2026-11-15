@@ -391,5 +391,10 @@
   "MonitorPilot-Profil.json": "MonitorPilot-Profile.json",
   "MonitorPilot-Diagnose.json": "MonitorPilot-Diagnostics.json",
   "Arbeitsplatz wiederherstellen.lnk": "Restore workspace.lnk",
-  "●  Bereit · Beispieldaten für die Dokumentation": "●  Ready · Sample data for documentation"
+  "●  Bereit · Beispieldaten für die Dokumentation": "●  Ready · Sample data for documentation",
+  "Haupt": "Main",
+  "Hochformat": "Portrait",
+  "Helligkeit {0} %": "Brightness {0} %",
+  "Skalierung {0} %": "Scale {0} %",
+  "Helligkeit: kein DDC/CI": "Brightness: no DDC/CI"
 }

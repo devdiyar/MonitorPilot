@@ -25,6 +25,12 @@ public sealed class MonitorDevice
     public bool? Hdr { get; set; }
     public uint Bits { get; set; }
     public string Connection { get; set; } = "";
+    public int WidthMm { get; set; }
+    public int HeightMm { get; set; }
+    public int ScalePercent { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public double? DiagonalInches => WidthMm>0&&HeightMm>0 ? Math.Sqrt(WidthMm*(double)WidthMm+HeightMm*(double)HeightMm)/25.4 : null;
+    [System.Text.Json.Serialization.JsonIgnore] public bool Portrait => Rotation is 2 or 4;
+    [System.Text.Json.Serialization.JsonIgnore] public string SizeText => DiagonalInches is {} inches ? L.Format("{0:0.#}″",inches) : "";
     public HardwareState Hardware { get; set; } = new();
     private string ddcStatus="Noch nicht geprüft";
     public int DdcControlCount {get;set;}

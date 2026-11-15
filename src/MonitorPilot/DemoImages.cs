@@ -27,7 +27,7 @@ internal static class DemoImages
             var monitors=samples.Select((s,i)=>new MonitorDevice
             {
                 Key="demo-display-"+i,DeviceName="demo-device-"+i,AdapterKey="demo-gpu",Name=s.Item1,Number=i+1,Active=true,Primary=i==0,
-                X=s.Item2,Y=s.Item3,Width=s.Item4,Height=s.Item5,Hz=s.Item6,Rotation=i==3?2u:1u,Connection="DisplayPort",Bits=8,Hdr=false,DdcStatus="DDC/CI verbunden · {0} Regler",DdcControlCount=5,
+                X=s.Item2,Y=s.Item3,Width=s.Item4,Height=s.Item5,Hz=s.Item6,Rotation=i==3?2u:1u,Connection="DisplayPort",WidthMm=i==0?697:597,HeightMm=i==0?392:336,ScalePercent=100,Bits=8,Hdr=false,DdcStatus="DDC/CI verbunden · {0} Regler",DdcControlCount=5,
                 Hardware=new(){Brightness=Value((uint)s.Item7),Contrast=Value(70),Red=Value(50),Green=Value(50),Blue=Value(50),Temperature=3,TemperatureMask=36}
             }).ToList();
             foreach(var m in monitors)DisplayService.ModesFor(m.DeviceName,()=>new(){new(){Width=(uint)m.Width,Height=(uint)m.Height,Frequency=(uint)m.Hz},new(){Width=(uint)m.Width,Height=(uint)m.Height,Frequency=60}});

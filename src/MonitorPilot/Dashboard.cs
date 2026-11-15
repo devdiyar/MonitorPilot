@@ -73,7 +73,7 @@ internal sealed partial class MainWindow
         var toolbar=new DockPanel{Margin=new Thickness(0,0,0,8)};var left=Theme.Row(Theme.Badge("●  "+c.Monitors.Count(m=>m.Active)+L.T(" aktiv"),true),hardwareCount);left.VerticalAlignment=VerticalAlignment.Center;
         var actions=Theme.Row(Theme.Button(L.T("Identifizieren"),()=>c.Overlays.Identify(c.Monitors)),ActionButton(L.T("Neu erkennen"),c.Refresh));DockPanel.SetDock(actions,Dock.Right);toolbar.Children.Add(actions);toolbar.Children.Add(left);content.Children.Add(toolbar);
         var mapHeader=new DockPanel();var arrange=Theme.Button(L.T("Anordnen"),EditLayout);arrange.MinHeight=30;arrange.Padding=new Thickness(10,5,10,5);arrange.Margin=new Thickness(8,0,0,0);DockPanel.SetDock(arrange,Dock.Right);mapHeader.Children.Add(arrange);mapHeader.Children.Add(Theme.Label(L.T("Monitoranordnung"),16,null,true));
-        var canvas=new Canvas{Height=226,ClipToBounds=true,Background=Theme.Map,Margin=new Thickness(0,10,0,0)};canvas.SizeChanged+=(_,_)=>DrawMap(canvas);
+        var canvas=new Canvas{Height=300,ClipToBounds=true,Background=Theme.Map,Margin=new Thickness(0,10,0,0)};canvas.SizeChanged+=(_,_)=>DrawMap(canvas);
         var mapCard=Theme.Panel(Theme.Stack(mapHeader,canvas,Theme.Label(L.T("Klicke auf einen Bildschirm, um seine Werte zu bearbeiten."),11,Theme.Muted)));mapCard.Padding=new Thickness(18,16,18,8);
         var quick=Theme.Stack(Theme.Label(L.T("Fokus & Wiederherstellung"),16,null,true),Theme.Label(L.T("Zusatzmonitore ausschalten. Dein Arbeitsplatz bleibt gesichert."),12,Theme.Muted));
         var focus=ActionButton(c.Monitors.Count(m=>m.Active)==1?L.T("Arbeitsplatz wiederherstellen"):L.T("Nur Hauptmonitor verwenden"),c.Focus,true);focus.Margin=new Thickness(0,6,0,8);quick.Children.Add(focus);
@@ -88,7 +88,7 @@ internal sealed partial class MainWindow
             var row=new Grid{Margin=new Thickness(0,7,0,7)};
             row.ColumnDefinitions.Add(new(){Width=new GridLength(40)});row.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=new GridLength(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=new GridLength(110)});row.ColumnDefinitions.Add(new(){Width=new GridLength(75)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
             var number=Theme.Badge(monitor.Number.ToString(),monitor.Primary);row.Children.Add(number);
-            var title=Theme.Stack(Theme.Label(c.Name(monitor),14,null,true),Theme.Label(monitor.Primary?L.T("Hauptmonitor · ")+monitor.Connection:monitor.Connection,11,Theme.Muted));Grid.SetColumn(title,1);row.Children.Add(title);
+            var title=Theme.Stack(Theme.Label(c.Name(monitor),14,null,true),Theme.Label((monitor.Primary?L.T("Hauptmonitor · "):"")+monitor.Connection+(monitor.SizeText.Length>0?" · "+monitor.SizeText:""),11,Theme.Muted));Grid.SetColumn(title,1);row.Children.Add(title);
             var hardwareInfo=Theme.Label(monitor.Hardware.Brightness!=null?L.T("Hardwaresteuerung verfügbar"):monitor.Active?monitor.DdcStatus:L.T("Deaktiviert"),11,Theme.Muted);
             var info=Theme.Stack(Theme.Label(monitor.Summary,12),hardwareInfo);Grid.SetColumn(info,2);row.Children.Add(info);
             var brightness=Theme.Label(monitor.Hardware.Brightness is {} b?L.F($"{b.Percent} %  Helligkeit"):"—",12,Theme.Muted);brightness.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(brightness,3);row.Children.Add(brightness);
@@ -109,22 +109,36 @@ internal sealed partial class MainWindow
         double Average()=>Math.Round(c.Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null).Select(m=>(double)c.ControlPercent(m,MonitorControl.Brightness)!).DefaultIfEmpty(50).Average());
         bool updating=false;var master=new Slider{Minimum=0,Maximum=100,Value=Average(),Width=210,IsEnabled=c.Monitors.Any(m=>m.Active&&m.Hardware.Brightness!=null),IsSnapToTickEnabled=true,TickFrequency=1,SmallChange=1,LargeChange=5,Margin=new Thickness(12,0,12,0)};System.Windows.Automation.AutomationProperties.SetName(master,L.T("Alle Displays"));var numberLabel=Theme.Label($"{master.Value:0} %",13,Theme.Accent,true);numberLabel.VerticalAlignment=VerticalAlignment.Center;master.ValueChanged+=(_,e)=>{numberLabel.Text=$"{e.NewValue:0} %";if(!updating)c.LiveBrightness((int)e.NewValue);};
         var liveControls=Theme.Stack(Theme.Row(Theme.Label(L.T("Alle Displays"),13,null,true),master,numberLabel),Theme.Label(L.T("Helligkeit wird live übernommen."),11,Theme.Muted));var windows=Theme.Button(L.T("Fensterpositionen zurück"),()=>_=c.Run(()=>{c.RestoreWindows();return Task.CompletedTask;}));content.Children.Add(Theme.Columns(liveControls,windows,220));
-        updateHardwareControls=()=>{updating=true;try{foreach(var update in updates)update();master.IsEnabled=c.Monitors.Any(m=>m.Active&&m.Hardware.Brightness!=null);master.Value=Average();}finally{updating=false;}};return content;
+        updateHardwareControls=()=>{updating=true;try{foreach(var update in updates)update();foreach(var m in c.Monitors)if(mapBrightness.TryGetValue(m.Key,out var label))label.Text=MapBrightness(m);master.IsEnabled=c.Monitors.Any(m=>m.Active&&m.Hardware.Brightness!=null);master.Value=Average();}finally{updating=false;}};return content;
     }
+    private readonly Dictionary<string,TextBlock> mapBrightness=new();
+    private string MapBrightness(MonitorDevice m)=>c.ControlPercent(m,MonitorControl.Brightness) is {} percent?L.F($"Helligkeit {percent} %"):L.T("Helligkeit: kein DDC/CI");
     private void DrawMap(Canvas canvas)
     {
-        canvas.Children.Clear();var monitors=c.Monitors.Where(m=>m.Active).ToList();if(monitors.Count==0)return;
+        canvas.Children.Clear();mapBrightness.Clear();var monitors=c.Monitors.Where(m=>m.Active).ToList();if(monitors.Count==0)return;
         double width=Math.Max(100,canvas.ActualWidth),height=canvas.Height;
         for(double x=12;x<width;x+=20)for(double y=12;y<height;y+=20){var dot=new Ellipse{Width=1.5,Height=1.5,Fill=Theme.Border};Canvas.SetLeft(dot,x);Canvas.SetTop(dot,y);canvas.Children.Add(dot);}
         int left=monitors.Min(m=>m.X),top=monitors.Min(m=>m.Y),right=monitors.Max(m=>m.X+m.Width),bottom=monitors.Max(m=>m.Y+m.Height);
         double scale=Math.Min((width-46)/Math.Max(1,right-left),(height-38)/Math.Max(1,bottom-top));double ox=(width-(right-left)*scale)/2,oy=(height-(bottom-top)*scale)/2;
         foreach(var m in monitors)
         {
-            double w=m.Width*scale-5,h=m.Height*scale-5;
-            var number=Theme.Label(m.Number.ToString(),20,m.Primary?Theme.Accent:Theme.Text,true);number.Margin=new Thickness(0,0,0,3);
-            var text=Theme.Label(c.Name(m),10,Theme.Muted);text.TextWrapping=TextWrapping.NoWrap;text.TextTrimming=TextTrimming.CharacterEllipsis;text.Margin=new Thickness(0);
-            var stack=Theme.Stack(number,text);stack.VerticalAlignment=VerticalAlignment.Center;
-            var box=new Border{Width=Math.Max(30,w),Height=Math.Max(30,h),Background=m.Primary?Theme.Soft:Theme.Card,BorderBrush=m.Primary?Theme.Accent:Theme.Track,BorderThickness=new Thickness(m.Primary?2:1),CornerRadius=new CornerRadius(6),Padding=new Thickness(10,4,8,4),Child=stack,Cursor=System.Windows.Input.Cursors.Hand,ToolTip=$"{c.Name(m)} · {m.Summary}"};
+            double w=Math.Max(30,m.Width*scale-5),h=Math.Max(30,m.Height*scale-5);
+            TextBlock Line(string text,double size,Brush color,bool medium=false)=>new(){Text=text,FontSize=size,Foreground=color,FontWeight=medium?FontWeights.Medium:FontWeights.Normal,TextWrapping=TextWrapping.NoWrap,TextTrimming=TextTrimming.CharacterEllipsis,Margin=new Thickness(0,1,0,0)};
+            var header=new DockPanel{Margin=new Thickness(0,0,0,2)};
+            if(m.Primary&&w>=110){var chip=new Border{Background=Theme.Accent,CornerRadius=new CornerRadius(4),Padding=new Thickness(5,0,5,1),VerticalAlignment=VerticalAlignment.Center,Child=new TextBlock{Text=L.T("Haupt"),FontSize=10,FontWeight=FontWeights.Medium,Foreground=Theme.AccentText}};DockPanel.SetDock(chip,Dock.Right);header.Children.Add(chip);}
+            var number=new TextBlock{Text=m.Number.ToString(),FontSize=18,FontWeight=FontWeights.SemiBold,Foreground=Theme.Text,Margin=new Thickness(0,0,8,0),VerticalAlignment=VerticalAlignment.Center};header.Children.Add(number);
+            header.Children.Add(Line(c.Name(m),11,Theme.Text,true));header.Children[^1].SetValue(VerticalAlignmentProperty,VerticalAlignment.Center);
+            var size=string.Join(" · ",new[]{m.SizeText,$"{m.Width} × {m.Height}"}.Where(t=>t.Length>0));
+            var extras=new List<string>{$"{m.Hz:0.##} Hz"};if(m.ScalePercent>0)extras.Add(L.F($"Skalierung {m.ScalePercent} %"));if(m.Portrait)extras.Add(L.T("Hochformat"));if(m.Hdr==true)extras.Add("HDR");
+            var brightness=Line(MapBrightness(m),11,Theme.Muted);mapBrightness[m.Key]=brightness;
+            var facts=w<170?new[]{m.SizeText,$"{m.Width} × {m.Height}"}.Concat(extras).Where(t=>t.Length>0).ToList():new List<string>{size,string.Join(" · ",extras)};
+            var lines=new List<UIElement>{header};lines.AddRange(facts.Select(f=>Line(f,11,Theme.Muted)));lines.Add(brightness);
+            // Lower-priority lines give way when a tile is small; the tooltip always carries everything.
+            int fit=Math.Max(1,Math.Min(lines.Count,1+(int)((h-36)/16.5)));
+            if(fit<lines.Count&&fit>1){lines.RemoveAt(fit-1);lines.Insert(fit-1,brightness);}
+            var stack=new StackPanel{VerticalAlignment=VerticalAlignment.Center};foreach(var line in lines.Take(fit))stack.Children.Add(line);
+            var tooltip=string.Join(Environment.NewLine,new[]{c.Name(m)+(m.Primary?L.T(" · Hauptmonitor"):""),size,string.Join(" · ",extras),m.Connection,MapBrightness(m)}.Where(t=>t.Length>0));
+            var box=new Border{Width=w,Height=h,Background=m.Primary?Theme.Soft:Theme.Card,BorderBrush=m.Primary?Theme.Accent:Theme.Track,BorderThickness=new Thickness(m.Primary?2:1),CornerRadius=new CornerRadius(8),Padding=new Thickness(10,6,8,6),Child=stack,Cursor=System.Windows.Input.Cursors.Hand,ToolTip=tooltip};
             Canvas.SetLeft(box,ox+(m.X-left)*scale+2);Canvas.SetTop(box,oy+(m.Y-top)*scale+2);box.MouseLeftButtonUp+=(_,_)=>{selectedKey=m.Key;Navigate("colors");};canvas.Children.Add(box);
         }
     }
