@@ -22,9 +22,23 @@ internal sealed partial class MainWindow
         }
         content.Children.Add(Theme.Label(L.T("Fensterpositionen lassen sich wiederherstellen, solange dieselben Programme noch geöffnet sind. Fehlende Monitoranschlüsse werden vor dem Anwenden geprüft."),12,Theme.Muted));return content;
     }
+    private PhotoMatchWindow? photoMatch;
+    private void OpenPhotoMatch()
+    {
+        if(photoMatch is {IsLoaded:true}){photoMatch.Activate();return;}
+        photoMatch=new PhotoMatchWindow(c){Owner=this};photoMatch.Closed+=(_,_)=>photoMatch=null;photoMatch.Show();
+    }
+    private UIElement MatchState()
+    {
+        if(c.Settings.Match is not {} match)return new Border();
+        var reference=c.Monitors.FirstOrDefault(m=>m.Key==match.Reference);
+        var text=reference==null?L.T("Gespeicherter Abgleich: Referenzmonitor ist gerade nicht verbunden."):L.F($"Gespeicherter Abgleich vom {match.SavedAt.LocalDateTime:dd.MM. HH:mm} (Referenz {reference.Number} · {c.Name(reference)}). Gemeinsame Helligkeit, Tray, Tastenkürzel und Zeitplan halten die Monitore gleich.");
+        return Theme.Stack(Theme.Label(text,13,Theme.Success),Theme.Row(Theme.Button(L.T("Abgleich wiederherstellen"),c.RestoreMatch),Theme.Button(L.T("Abgleich entfernen"),c.ForgetMatch)));
+    }
     private UIElement CalibrationPage()
     {
-        var content=new StackPanel();var patterns=new WrapPanel();foreach(string pattern in new[]{"Graustufen","Farbfelder","Weiß","Schwarz","Rot","Grün","Blau"})patterns.Children.Add(Theme.Button(L.T(pattern),()=>c.Overlays.Patterns(c.Monitors,pattern)));
+        var content=new StackPanel();
+        content.Children.Add(Theme.Panel(Theme.Stack(Theme.Label(L.T("Per Foto angleichen"),18,null,true),Theme.Label(L.T("Dein Handy misst: Ein Foto zeigt alle Bildschirme mit demselben Testbild, MonitorPilot gleicht Helligkeit und Farbe Schritt für Schritt an einen Referenzmonitor an. Nach jeder Runde ein neues Foto, bis „Fertig“ erscheint."),13,Theme.Muted),MatchState(),Theme.Button(L.T("Abgleich starten"),OpenPhotoMatch,true))));var patterns=new WrapPanel();foreach(string pattern in new[]{"Graustufen","Farbfelder","Weiß","Schwarz","Rot","Grün","Blau"})patterns.Children.Add(Theme.Button(L.T(pattern),()=>c.Overlays.Patterns(c.Monitors,pattern)));
         content.Children.Add(Theme.Panel(Theme.Stack(Theme.Label(L.T("Dasselbe Testbild auf allen Monitoren"),18,null,true),Theme.Label(L.T("Vergleiche Helligkeit, Graustufen und Farbstiche direkt nebeneinander."),13,Theme.Muted),patterns,Theme.Label(L.T("Esc schließt alle Testbilder. Sie enden automatisch nach 5 Minuten."),12,Theme.Muted),Theme.Row(Theme.Button(L.T("Testbilder schließen"),c.Overlays.ClosePatterns),Theme.Button(L.T("Softwaredimmung entfernen"),()=>{c.Overlays.Clear();c.Report(L.T("Softwaredimmung entfernt."));})))));
         var steps=new[]{("01",L.T("Helligkeit angleichen"),L.T("Weiß anzeigen und die Hardware-Helligkeit pro Monitor angleichen. Unterschiedliche Bildmodi und dynamischen Kontrast im Monitormenü ausschalten.")),("02",L.T("Farbstiche reduzieren"),L.T("Graustufen vergleichen. Unter „Bild & Farbe“ Rot, Grün und Blau schrittweise abstimmen. Möglichst aus deinem normalen Blickwinkel vergleichen.")),("03",L.T("Arbeitsprofil sichern"),L.T("Farbflächen und echte Fotos prüfen. Danach die abgestimmten Werte mit deiner Anordnung als Arbeitsprofil speichern.")),("04",L.T("Farben exakt vermessen"),L.T("Für verbindliche Farben ein Colorimeter und passende ICC-Profile verwenden. Ein visueller Vergleich ersetzt keine Messung."))};
         for(int i=0;i<steps.Length;i+=2){Border Card(int n){var s=steps[n];return Theme.Panel(Theme.Stack(Theme.Label(s.Item1,12,Theme.Accent,true),Theme.Label(s.Item2,16,null,true),Theme.Label(s.Item3,13,Theme.Muted)));}content.Children.Add(Theme.Columns(Card(i),Card(i+1),0));}

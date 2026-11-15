@@ -68,8 +68,55 @@ internal sealed class AppController
     public void LiveBrightness(int percent)
     {
         if(Busy)return;bool idle=!Live.IsRunning;
-        foreach(var m in Monitors.Where(m=>m.Active))Live.Enqueue(m,MonitorControl.Brightness,percent);
+        var levels=MatchedLevels(percent);
+        foreach(var m in Monitors.Where(m=>m.Active))
+        {
+            if(levels!=null&&levels.TryGetValue(m.Key,out var level)){Live.Enqueue(m,MonitorControl.Brightness,level.Brightness);Overlays.Set(m,level.Dimming);}
+            else Live.Enqueue(m,MonitorControl.Brightness,percent);
+        }
         LiveQueued(idle);
+    }
+    // A saved photo match is only used while its reference display is connected.
+    public MonitorDevice? MatchReference=>Settings.Match is {} match?Monitors.FirstOrDefault(m=>m.Active&&m.Key==match.Reference&&m.Hardware.Brightness!=null):null;
+    private Dictionary<string,(int Brightness,int Dimming)>? MatchedLevels(int reference)=>MatchReference!=null?PhotoMatch.Follow(Settings.Match!,reference):null;
+    // What "all displays" sliders show: the reference while matched, otherwise the average.
+    public int SharedBrightness()
+    {
+        if(MatchReference is {} reference&&ControlPercent(reference,MonitorControl.Brightness) is int value)return value;
+        return (int)Math.Round(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null).Select(m=>(double)ControlPercent(m,MonitorControl.Brightness)!).DefaultIfEmpty(50).Average());
+    }
+    public void SaveMatch(string reference)
+    {
+        var match=new MatchCalibration{Reference=reference};
+        foreach(var m in Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null))
+        {
+            Overlays.Levels.TryGetValue(m.Key,out int dim);int? Value(MonitorControl control)=>LiveControlQueue.Control(m.Hardware,control)!=null?ControlPercent(m,control):null;
+            match.Levels[m.Key]=new(){Brightness=ControlPercent(m,MonitorControl.Brightness)??0,Dimming=dim,Red=Value(MonitorControl.Red),Green=Value(MonitorControl.Green),Blue=Value(MonitorControl.Blue)};
+        }
+        if(!match.Levels.ContainsKey(reference))return;
+        Settings.Match=match;SaveSettings();Changed?.Invoke();
+    }
+    public void ForgetMatch(){Settings.Match=null;SaveSettings();Changed?.Invoke();Report(L.T("Gespeicherter Abgleich entfernt. Gemeinsame Helligkeit setzt wieder alle Monitore auf denselben Wert."));}
+    // Puts colors and levels back to the saved match at the reference's current brightness.
+    public void RestoreMatch()
+    {
+        if(Busy||MatchReference is not {} reference)return;bool idle=!Live.IsRunning;
+        var levels=PhotoMatch.Follow(Settings.Match!,ControlPercent(reference,MonitorControl.Brightness)??Settings.Match!.Levels[reference.Key].Brightness);
+        foreach(var m in Monitors.Where(m=>m.Active&&Settings.Match!.Levels.ContainsKey(m.Key)))
+        {
+            var saved=Settings.Match!.Levels[m.Key];
+            foreach(var (control,value) in new[]{(MonitorControl.Red,saved.Red),(MonitorControl.Green,saved.Green),(MonitorControl.Blue,saved.Blue),(MonitorControl.Brightness,(int?)levels[m.Key].Brightness)})
+                if(value is int v&&LiveControlQueue.Control(m.Hardware,control)!=null)Live.Enqueue(m,control,v);
+            Overlays.Set(m,levels[m.Key].Dimming);
+        }
+        LiveQueued(idle);Report(L.T("Gespeicherter Abgleich wiederhergestellt."));
+    }
+    // Software dimming lives only in memory; after a restart it is set again where the backlight still sits at the matched level.
+    private void ResumeMatchDimming()
+    {
+        if(MatchReference is not {} reference||ControlPercent(reference,MonitorControl.Brightness) is not int value)return;
+        foreach(var (key,level) in PhotoMatch.Follow(Settings.Match!,value))
+            if(level.Dimming>0&&Monitors.FirstOrDefault(m=>m.Active&&m.Key==key) is {} m&&ControlPercent(m,MonitorControl.Brightness)==level.Brightness&&!Overlays.Levels.ContainsKey(key))Overlays.Set(m,level.Dimming);
     }
     private void LiveQueued(bool idle)
     {
@@ -133,7 +180,7 @@ internal sealed class AppController
             var active=list.Where(m=>m.Active).ToList();
             await Task.WhenAll(active.Select(m=>Task.Run(()=>Hardware.ProbeBrightness(m))));
             if(!ReferenceEquals(list,Monitors))return;
-            HardwareDiscovered?.Invoke();Store.Log($"Startup brightness ready: {elapsed.Elapsed.TotalMilliseconds:0} ms");
+            ResumeMatchDimming();HardwareDiscovered?.Invoke();Store.Log($"Startup brightness ready: {elapsed.Elapsed.TotalMilliseconds:0} ms");
             if(!Busy)Report(L.T("Helligkeit bereit. Weitere Monitorfunktionen werden im Hintergrund erkannt …"));
             var main=Main;
             var modes=Task.Run(()=>{if(main!=null)DisplayService.Modes(main.DeviceName);});
@@ -318,7 +365,15 @@ internal sealed class AppController
         catch {await Task.Run(()=>Hardware.Probe(monitor));throw;}
     }
     public async Task Brightness(int value,bool relative=false)
-        =>await SetBrightness(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null).Select(m=>(Monitor:m,Value:value)).ToArray(),relative);
+    {
+        if(MatchReference is {} reference)
+        {
+            int target=Math.Clamp(relative?(ControlPercent(reference,MonitorControl.Brightness)??0)+value:value,0,100);var levels=MatchedLevels(target)!;
+            foreach(var m in Monitors.Where(m=>m.Active&&levels.ContainsKey(m.Key)))Overlays.Set(m,levels[m.Key].Dimming);
+            await SetBrightness(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null).Select(m=>(Monitor:m,Value:levels.TryGetValue(m.Key,out var level)?level.Brightness:target)).ToArray(),false);return;
+        }
+        await SetBrightness(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null).Select(m=>(Monitor:m,Value:value)).ToArray(),relative);
+    }
     public async Task Brightness(IReadOnlyDictionary<string,int> levels)
         =>await SetBrightness(Monitors.Where(m=>m.Active&&m.Hardware.Brightness!=null&&levels.ContainsKey(m.Key)).Select(m=>(Monitor:m,Value:levels[m.Key])).ToArray(),false);
     private async Task SetBrightness((MonitorDevice Monitor,int Value)[] targets,bool relative)

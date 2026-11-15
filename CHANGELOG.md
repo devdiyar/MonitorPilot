@@ -7,7 +7,9 @@
 - The focus backup is cleared once the layout is back, even if some DDC/CI values cannot be written. Snapshot names no longer grow with repeated restores.
 - New look based on the shadcn/ui design system: neutral light/dark tokens, Geist font, outline/default buttons, select, checkbox, slider, tabs, badges and tooltips.
 - Monitor map tiles show the panel diagonal (read from EDID), resolution, refresh rate, Windows scaling, orientation, HDR and live brightness; narrow tiles list one fact per line. The monitor list shows the diagonal too.
-- 57 self-tests, including restore target selection and EDID size parsing.
+- Match displays by photo (Color comparison → Start matching), run from the phone: Start turns every screen gray with a big number, the phone page takes one photo of all screens and answers with the next step. MonitorPilot finds the screens in the photo, pairs them with displays through the Windows arrangement (markers can be dragged), picks the most central display as reference and applies a damped step to brightness, RGB gains and software dimming. Rounds repeat until all displays are within 7 % brightness and 4 % color, or 10 rounds. Each round moves a control by at most 12 (brightness) or 10 (RGB) points; colors can be left alone, and Undo restores the values from before matching. Reference, manual apply, file/clipboard input and profile saving sit under "Advanced".
+- The match is saved and kept: the shared brightness slider (dashboard and tray), brightness shortcuts, tray presets and the day/night schedule now scale every display from its matched level instead of setting one percent for all, falling back to software dimming below 0 %. Software dimming from the match is restored after a restart. Color comparison shows the saved match with "Restore match" and "Remove match".
+- 65 self-tests, including restore target selection, EDID size parsing, match planning, step limits, screen detection, matched brightness, photo sampling and the upload page with its reply.
 
 ## 1.4.0 — 2026-10-11
 

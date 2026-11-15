@@ -100,6 +100,22 @@ public sealed class HotkeySetting
     public uint Key { get; set; }
     public string Label { get; set; } = "";
 }
+// Result of a photo match: the levels at which every display looked like the reference. Shared brightness changes
+// scale from here, so the displays stay matched instead of all getting the same percent.
+public sealed class MatchCalibration
+{
+    public string Reference { get; set; } = "";
+    public DateTimeOffset SavedAt { get; set; } = DateTimeOffset.Now;
+    public Dictionary<string, MatchLevel> Levels { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+public sealed class MatchLevel
+{
+    public int Brightness { get; set; }
+    public int Dimming { get; set; }
+    public int? Red { get; set; }
+    public int? Green { get; set; }
+    public int? Blue { get; set; }
+}
 public sealed class AppSettings
 {
     public string Language {get;set;}="de";
@@ -115,6 +131,7 @@ public sealed class AppSettings
     public string NightTime { get; set; } = "21:00";
     public int DayBrightness { get; set; } = 70;
     public int NightBrightness { get; set; } = 30;
+    public MatchCalibration? Match { get; set; }
     public void Normalize()
     {
         Language=L.Normalize(Language);
@@ -131,6 +148,8 @@ public sealed class AppSettings
             saved.Label=defaultKey.Label;return saved;
         }).ToList();
         DayBrightness=Math.Clamp(DayBrightness,0,100);NightBrightness=Math.Clamp(NightBrightness,0,100);
+        if(Match!=null&&(Match.Levels==null||string.IsNullOrWhiteSpace(Match.Reference)||!Match.Levels.ContainsKey(Match.Reference)))Match=null;
+        if(Match!=null)foreach(var level in Match.Levels.Values){level.Brightness=Math.Clamp(level.Brightness,0,100);level.Dimming=Math.Clamp(level.Dimming,0,80);}
         if(!TimeSpan.TryParseExact(DayTime,"hh\\:mm",CultureInfo.InvariantCulture,out var day)||day.TotalHours>=24)DayTime="08:00";
         if(!TimeSpan.TryParseExact(NightTime,"hh\\:mm",CultureInfo.InvariantCulture,out var night)||night.TotalHours>=24)NightTime="21:00";
         if(DayTime==NightTime){BrightnessSchedule=false;DayTime="08:00";NightTime="21:00";}
