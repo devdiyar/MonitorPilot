@@ -58,6 +58,16 @@ internal sealed class TrayQuickWindow : Window
         }
         master.ValueChanged+=(_,e)=>{if(!rebuilding)c.LiveBrightness((int)e.NewValue);};
         body.Children.Add(Theme.Label(L.T("Alle Regler werden beim Verstellen live übernommen."),10,Theme.Muted));
+        // Software dimming: an overlay per monitor, the screen and its backlight stay on.
+        var dimSection=Theme.Label(L.T("SOFTWAREDIMMUNG"),10,Theme.Muted,true);dimSection.Margin=new Thickness(0,14,0,6);body.Children.Add(dimSection);
+        foreach(var m in monitorList)
+        {
+            int level=c.Overlays.Levels.GetValueOrDefault(m.Key);var row=new DockPanel();var number=Theme.Label(level+" %",12,level>0?Theme.Accent:Theme.Muted);DockPanel.SetDock(number,Dock.Right);row.Children.Add(number);row.Children.Add(Theme.Label(m.Number.ToString("00")+" · "+c.Name(m),12,null,true));body.Children.Add(row);
+            var slider=new Slider{Minimum=0,Maximum=80,Value=level,IsSnapToTickEnabled=true,TickFrequency=1,SmallChange=1,LargeChange=5,Margin=new Thickness(0,0,0,10)};AutomationProperties.SetName(slider,c.Name(m)+L.T(": Abdunklung"));
+            slider.ValueChanged+=(_,e)=>{number.Text=$"{e.NewValue:0} %";number.Foreground=e.NewValue>0?Theme.Accent:Theme.Muted;if(!rebuilding)c.SetDimming(m,(int)e.NewValue);};body.Children.Add(slider);
+            updates.Add(()=>slider.Value=c.Overlays.Levels.GetValueOrDefault(m.Key));
+        }
+        body.Children.Add(Theme.Button(L.T("Dimmung entfernen"),()=>{c.Overlays.Clear();c.Report(L.T("Softwaredimmung entfernt."));updateHardware?.Invoke();}));
         if(c.Profiles.Count>0)
         {
             body.Children.Add(new Border{Height=1,Background=Theme.Border,Margin=new Thickness(0,8,0,12)});var profiles=new ComboBox{ItemsSource=c.Profiles,SelectedIndex=0,Margin=new Thickness(0,3,0,8)};AutomationProperties.SetName(profiles,L.T("Arbeitsprofil auswählen"));body.Children.Add(Theme.Label(L.T("Arbeitsprofil"),12,null,true));body.Children.Add(profiles);body.Children.Add(Theme.Button(L.T("Profil anwenden"),()=>{if(profiles.SelectedItem is ProfileEntry p)RunAndClose(async()=>{await c.ApplyWorkspace(p.Workspace);});}));

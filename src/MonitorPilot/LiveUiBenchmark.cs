@@ -54,6 +54,9 @@ internal static class LiveUiBenchmark
             var overlay=dimWindows.GetValueOrDefault(a.Key);dim.Value=2;
             Check("Dimming updates live using the existing overlay window",overlay!=null&&ReferenceEquals(overlay,dimWindows.GetValueOrDefault(a.Key))&&Math.Abs(overlay.Opacity-.02)<.0001);
             dim.Value=0;Check("Zero dimming removes the live overlay",!dimWindows.ContainsKey(a.Key)&&controller.Overlays.Levels.GetValueOrDefault(a.Key)==0);
+            var trayDim=Find<Slider>(quick,"QA A: Abdunklung");trayDim.Value=12;Pump();
+            Check("Tray dimming slider sets the overlay live",controller.Overlays.Levels.GetValueOrDefault(a.Key)==12&&dimWindows.ContainsKey(a.Key));
+            trayDim.Value=0;Pump();Check("Tray dimming slider at zero removes the overlay",!dimWindows.ContainsKey(a.Key));
             var temperature=Find<ComboBox>(window,"Hardware-Weißpunkt");temperature.SelectedIndex=1;Wait(controller.Live.DrainAsync());Pump();
             Check("White point applies live and refreshes RGB controls",a.Hardware.Temperature==3&&Find<Slider>(window,"Rot").Value==50&&Find<Slider>(window,"Grün").Value==50&&Find<Slider>(window,"Blau").Value==50);
             controller.LiveControl(a,MonitorControl.Brightness,81);bool captured=false;
